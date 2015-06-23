@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="[% page.language %]">
+<head>
+   <meta charset="utf-8">
+   <meta name="description" content="[% loc( page.description ) %]">
+   <meta name="keywords" content="[% page.keywords %]">
+   <meta name="author" content="[% page.author %]">
+   <meta name="generator" content="[% page.appclass %] v[% page.application_version %]">
+   <meta name="apple-mobile-web-app-capable" content="yes" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link href="[% links.images %]favicon-[% prefs.theme %].png"
+          rel="icon" type="image/png">
+[%    IF config.font -%]
+   <link href="[% config.font %]" rel="stylesheet" type="text/css">
+[%    END -%]
+   <link href="[% links.css %][% skin %]-[% prefs.theme %].css"
+          rel="stylesheet" type="text/css">
+   <title>[% config.title %] - [% loc( page.title ) %]</title>
+</head>
+<body id="body">
+   [% content -%]
+</body>
+</html>

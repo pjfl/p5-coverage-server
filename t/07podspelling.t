@@ -41,4 +41,6 @@ __DATA__
 peter
 flanigan
 Coverage::Server
+localenv
 merchantability
+sysv

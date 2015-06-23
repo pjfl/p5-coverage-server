@@ -17,10 +17,13 @@ eval "use Test::Pod::Coverage 1.04";
 
 $EVAL_ERROR and plan skip_all => 'Test::Pod::Coverage 1.04 required';
 
-all_pod_coverage_ok();
+pod_coverage_ok( 'Coverage::Server' );
+pod_coverage_ok( 'Coverage::Server::Config'  );
+pod_coverage_ok( 'Coverage::Server::Request' );
+
+done_testing;
 
 # Local Variables:
 # mode: perl
 # tab-width: 3
 # End:
-# vim: expandtab shiftwidth=3:

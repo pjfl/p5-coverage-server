@@ -2,44 +2,13 @@
 use strict;
 use warnings;
 
-use Module::Build 0.4004;
+use Module::Build ##{ $meta2{prereqs}->{configure}->{requires}->{'Module::Build'} ##};
 use File::Spec::Functions qw( catdir );
 
-my $perl_ver = 5.010001;
-my $name     = 'Coverage-Server'; $name =~ s{ - }{::}gmx;
+my $perl_ver = ##{ $meta2{prereqs}->{runtime}->{requires}->{perl} ##};
+my $name     = '##{ $zilla->name ##}'; $name =~ s{ - }{::}gmx;
 my $prereqs  = {
-  'build_requires' => {
-    'Module::Build' => '0.4004',
-    'Test::Requires' => '0.06',
-    'version' => '0.88'
-  },
-  'configure_requires' => {
-    'Module::Build' => '0.4004',
-    'version' => '0.88'
-  },
-  'requires' => {
-    'Class::Usul' => 'v0.63.0',
-    'Exporter::Tiny' => '0.042',
-    'File::DataClass' => 'v0.63.0',
-    'HTML::FormWidgets' => 'v0.23.0',
-    'HTTP::Body' => '1.22',
-    'HTTP::Message' => '6.06',
-    'JSON::MaybeXS' => '1.003005',
-    'Moo' => '2.000001',
-    'Plack' => '1.0036',
-    'SVG' => '2.64',
-    'Template' => '2.26',
-    'Try::Tiny' => '0.22',
-    'Type::Tiny' => '1.000005',
-    'URI' => '1.67',
-    'Unexpected' => 'v0.38.0',
-    'Web::Simple' => '0.030',
-    'local::lib' => '2.000015',
-    'namespace::autoclean' => '0.26',
-    'namespace::clean' => '0.25',
-    'perl' => '5.010001',
-    'strictures' => '2.000000'
-  },
+##{ $plugin->get_prereqs( 1 ) ##}
 };
 my $testing  = sub { $ENV{AUTOMATED_TESTING}
                   || $ENV{PERL_CPAN_REPORTER_CONFIG}
@@ -61,7 +30,7 @@ my $bob = Module::Build->subclass( code => do { local $/; <DATA> } )->new(
    'notes'          => { min_perl_version => $perl_ver,
                          testing          => $testing->() },
    %{ $prereqs },
-
+##{ $plugin->get_default('share_dir') ##}
 );
 
 $bob->install_path( 'bin'    => catdir( $bob->install_base, 'bin'   ) );

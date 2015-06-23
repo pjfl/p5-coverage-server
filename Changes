@@ -1,5 +1,7 @@
 Revision history for Coverage::Server
 
+          - Accepts summaries serves badges
+
 0.1.1     2015-06-10 12:27:48
           - Added project files to master branch
 

@@ -1,14 +1,8 @@
 package Coverage::Server;
 
 use 5.010001;
-use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 1 $ =~ /\d+/gmx );
-
-use Class::Usul::Constants;
-use Class::Usul::Functions  qw( throw );
-use Moo;
-
-extends q(Class::Usul::Programs);
+use strictures;
+use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 2 $ =~ /\d+/gmx );
 
 1;
 
@@ -20,32 +14,119 @@ __END__
 
 =head1 Name
 
-Coverage::Server - One-line description of the modules purpose
+Coverage::Server - Generate badges from test coverage summaries
 
 =head1 Synopsis
 
-   use Coverage::Server;
-   # Brief but working code examples
+   plackup --access-log var/logs/access_5000.log bin/coverage-server
 
 =head1 Description
 
-=head1 Configuration and Environment
+Receives test coverage summaries from L<Devel::Cover::Report::OwnServer>
+and generates a badge for each report received
 
-Defines the following attributes;
+=head1 Installation
+
+The C<Coverage-Server> repository on Github contains meta data that lists the
+CPAN modules used by the application. Modern Perl CPAN distribution installers
+(like L<App::cpanminus>) use this information to install the required
+dependencies. Requirements:
 
 =over 3
 
+=item C<Perl>
+
+Version C<5.12.0> or newer
+
+=item C<Git>
+
+To install C<Coverage-Server> from Github
+
 =back
+
+To find out if Perl is installed and which version; at a shell prompt type
+
+   perl -v
+
+To find out if Git is installed, type
+
+   git --version
+
+If you don't already have it, bootstrap L<App::cpanminus> with:
+
+   curl -L http://cpanmin.us | perl - --sudo App::cpanminus
+
+Then install L<local::lib> with:
+
+   cpanm --notest --local-lib=~/Coverage-Server local::lib && \
+     eval $(perl -I ~/Coverage-Server/lib/perl5/ -Mlocal::lib=~/Coverage-Server)
+
+The second statement sets environment variables to include the local Perl
+library. You can append the output of the perl command to your shell startup if
+you want to make it permanent. Without the correct environment settings Perl
+will not be able to find the installed dependencies and the following will
+fail, badly.
+
+Install C<Coverage-Server> with:
+
+   cpanm --notest git://github.com/pjfl/p5-coverage-server.git
+
+Although this is a I<simple> application it is composed of many CPAN
+distributions and, depending on how many of them are already available,
+installation may take a while to complete. The flip side is that there are no
+external dependencies like C<Node.js> or C<Grunt> to install. Anyway you are
+advised to seek out sustenance whilst you wait for the installation tests to
+complete.  At the risk of installing broken modules (they are only going into a
+local library) you can skip the tests by running C<cpanm> with the C<--notest>
+option
+
+If that fails run it again with the C<--force> option
+
+   cpanm --force git:...
+
+By default the development server will be found at
+C<http://localhost:5000/coverage> and can be started in the foreground with:
+
+   cd Coverage-Server
+   plackup --access-log var/logs/access_5000.log bin/coverage-server
+
+To start the production server in the background listening on the default port
+8085 use:
+
+   coverage-daemon start
+
+The C<doh-daemon> program provides normal SysV init script semantics.
+Additionally the daemon program will write an init script to standard output in
+response to the command:
+
+   coverage-daemon get_init_file
+
+=head1 Configuration and Environment
+
+The configuration file defaults to F<lib/Coverage/Server/coverage-server.json>
 
 =head1 Subroutines/Methods
 
+None
+
 =head1 Diagnostics
+
+Setting C<COVERAGE_DEBUG> to true in the environment and exporting it causes
+the application to log at the debug level
 
 =head1 Dependencies
 
 =over 3
 
 =item L<Class::Usul>
+
+=item L<Moo>
+
+=item L<Plack>
+
+=item L<SVG>
+
+=item L<Web::Simple>
 
 =back
 

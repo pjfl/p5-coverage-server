@@ -1,0 +1,43 @@
+   <!-- Footer -->
+   <div id="page-status" class="page-status"></div>
+   <script src="[% links.cdnjs.moocore %]"></script>
+   <script src="[% links.cdnjs.moomore %]"></script>
+   <script src="[% links.js %]mooclasses.js"></script>
+   <script src="[% links.js; skin %].js"></script>
+   <script>
+      var behaviour = new Behaviour( {
+         baseURI : '[% links.base_uri %]',
+         formName: '[% page.form_name %]',
+         message : '[% page.status_message %]'
+      } );
+      behaviour.config.anchors[ 'profile-user' ]
+         = { method  : 'modalDialog',
+             args    : [ '[% uri_for( 'user' ) %]?name=profile', {
+                name : 'profile-user',
+                title: '[% loc( 'User Profile' ) %]' } ] };
+      behaviour.config.inputs[ 'again' ]
+         = { event   : [ 'focus', 'blur' ],
+             method  : [ 'show_password', 'hide_password' ] };
+      behaviour.config.inputs[ 'password' ]
+         = { event   : [ 'focus', 'blur' ],
+             method  : [ 'show_password', 'hide_password' ] };
+      behaviour.config.anchors[ 'users' ]
+         = { event   : 'change', method: 'submitForm', args: [ '' ] };
+   </script>
+[% IF config.analytics -%]
+   <script>
+      ( function( w, d, t, s, f) {
+           w[ 'GoogleAnalyticsObject' ] = f;
+           w[ f ] = w[ f ] || function() {
+              ( w[ f ].q = w[ f ].q || [] ).push( arguments ) };
+           w[ f ].l = 1 * new Date();
+           var e = d.createElement( t ); e.async = 1; e.src = s;
+           var m = d.getElementsByTagName( t )[ 0 ];
+           m.parentNode.insertBefore( e, m );
+        } )( window, document, 'script',
+                '//www.google-analytics.com/analytics.js', 'ga' );
+      ga( 'create', '[% config.analytics %]', '[% req.domain %]' );
+      ga( 'send', 'pageview' );
+   </script>
+[% END -%]
+<!-- End of application templates -->

@@ -1,0 +1,117 @@
+#!/usr/bin/env perl
+
+use English qw( -no_match_vars );
+use FindBin qw( $Bin );
+use File::Spec;
+
+BEGIN {
+   my $bind = $Bin; $bind =~ m{ \A ([^\$%&\*;<>\`|]+) \z }mx and $bind = $1;
+   my $path = File::Spec->catfile( $bind, 'coverage-localenv' );
+
+   -f $path and (do $path or die $EVAL_ERROR || "Path ${path} not done\n");
+}
+
+use strictures::defanged; # Make strictures the same as use strict warnings
+
+use Coverage::Server::Listener;
+
+Coverage::Server::Listener->new
+   ( config => { appclass => 'Coverage::Server' } )->run_if_script;
+
+__END__
+
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+coverage-server - Generate badges from test coverage summaries
+
+=head1 SYNOPSIS
+
+=over 3
+
+=item B<coverage-server> B<> I<>
+
+I<Command line description>
+
+=item B<coverage-server> B<-H> | B<-h> I<[method]> | B<-?>
+
+Display man page / method help  / usage strings
+
+=item B<coverage-server> B<list_methods>
+
+Lists the methods available in this program
+
+=back
+
+=head1 DESCRIPTION
+
+I<Program description>
+
+=head1 REQUIRED ARGUMENTS
+
+=over 3
+
+=item I<>
+
+=back
+
+=head1 OPTIONS
+
+=over 3
+
+=item B<-D>
+
+Turn debugging on
+
+=back
+
+=head1 DIAGNOSTICS
+
+Prints errors to stderr
+
+=head1 EXIT STATUS
+
+Returns zero on success, non zero on failure
+
+=head1 CONFIGURATION
+
+Uses the constructor's C<appclass> attribute to locate a configuration file
+
+=head1 DEPENDENCIES
+
+=over 3
+
+=item L<Class::Usul>
+
+=back
+
+=head1 INCOMPATIBILITIES
+
+None
+
+=head1 BUGS AND LIMITATIONS
+
+Please report problems to
+http://rt.cpan.org/NoAuth/Bugs.html?Dist=Coverage-Server
+
+=head1 AUTHOR
+
+Peter Flanigan, C<< <pjfl@cpan.org> >>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2015 Peter Flanigan
+
+This is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
+
+# Local Variables:
+# mode: perl
+# tab-width: 3
+# End:
+# vim: expandtab shiftwidth=3:
