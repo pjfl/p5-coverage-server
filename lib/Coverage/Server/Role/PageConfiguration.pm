@@ -2,9 +2,6 @@ package Coverage::Server::Role::PageConfiguration;
 
 use namespace::autoclean;
 
-use Coverage::Server::Functions qw( extract_lang );
-use Class::Usul::Constants      qw( FALSE NUL TRUE );
-use Class::Usul::Types          qw( Object );
 use Moo::Role;
 
 requires qw( config load_page );
@@ -15,16 +12,15 @@ around 'load_page' => sub {
 
    my $page = $orig->( $self, $req, @args ); my $conf = $self->config;
 
-   for (qw( appclass author description keywords )) {
-      $page->{ $_ } //= $conf->$_();
-   }
+   for my $k (@{ $conf->stash_attr->{request} }) { $page->{ $k }   = $req->$k  }
 
-   $page->{template           } = [ @{ $conf->template } ];
+   for my $k (@{ $conf->stash_attr->{config } }) { $page->{ $k } //= $conf->$k }
+
    $page->{application_version} = $Coverage::Server::VERSION;
-   $page->{hint               } = $req->loc( 'Hint' );
-   $page->{language           } = $req->language;
-   $page->{locale             } = $req->locale;
-   $page->{status_message     } = $req->session->clear_status_message( $req );
+   $page->{status_message     } = $req->session->collect_status_message( $req );
+
+   $page->{hint  } //= $req->loc( 'Hint' );
+   $page->{locale} //= $req->locale;
 
    return $page;
 };

@@ -4,25 +4,14 @@ use 5.010001;
 use strictures;
 use parent  'Exporter::Tiny';
 
-use Class::Usul::Constants qw( EXCEPTION_CLASS LANG NUL TRUE );
-use Class::Usul::Functions qw( first_char is_arrayref is_hashref
-                               my_prefix split_on_dash throw );
-use English                qw( -no_match_vars );
-use Module::Pluggable::Object;
-use Scalar::Util           qw( blessed );
+use Class::Usul::Constants qw( EXCEPTION_CLASS NUL );
+use Class::Usul::Functions qw( app_prefix env_prefix find_apphome first_char
+                               get_cfgfiles is_arrayref is_hashref throw );
 use Unexpected::Functions  qw( Unspecified );
-use URI::Escape            qw( );
-use URI::http;
-use URI::https;
 
-our @EXPORT_OK = qw( build_navigation_list build_tree clone env_var
-                     extract_lang iterator load_components make_id_from
-                     make_name_from mtime new_uri set_element_focus );
-
-my $reserved   = q(;/?:@&=+$,[]);
-my $mark       = q(-_.!~*'());                                    #'; emacs
-my $unreserved = "A-Za-z0-9\Q${mark}\E";
-my $uric       = quotemeta( $reserved )."${unreserved}%";
+our @EXPORT_OK = qw( build_navigation_list build_tree clone env_var enhance
+                     iterator make_id_from make_name_from mtime
+                     set_element_focus );
 
 # Private functions
 my $_get_tip_text = sub {
@@ -40,14 +29,6 @@ my $_sorted_keys = sub {
 
    return [ sort { $node->{ $b }->{_order} <=> $node->{ $a }->{_order} }
             grep { first_char $_ ne '_' } keys %{ $node } ];
-};
-
-my $_uric_escape = sub {
-    my $str = shift;
-
-    $str =~ s{([^$uric\#])}{ URI::Escape::escape_char($1) }ego;
-    utf8::downgrade( $str );
-    return \$str;
 };
 
 my $_make_tuple = sub {
@@ -92,6 +73,7 @@ sub build_navigation_list ($$$$) {
       $link->{class}  = $node->{type} eq 'folder' ? 'folder-link' : 'file-link';
       $link->{tip  }  = $_get_tip_text->( $root, $node );
       $link->{depth} -= 2;
+
       if (defined $ids->[ 0 ] and $ids->[ 0 ] eq $node->{id}) {
          $link->{class} .= $node->{url} eq $wanted ? ' active' : ' open';
          shift @{ $ids };
@@ -115,7 +97,7 @@ sub build_tree {
    my $fcount = 0; my $max_mtime = 0; my $tree = {};
 
    for my $path ($dir->all) {
-      my ($id, $pref) =  @{ make_id_from( $path->filename ) };
+      my ($id, $pref) =  @{ make_id_from( $path->utf8->filename ) };
       my  $name       =  make_name_from( $id );
       my  $url        =  $url_base ? "${url_base}/${id}" : $id;
       my  $mtime      =  $path->stat->{mtime};
@@ -125,7 +107,7 @@ sub build_tree {
           id          => $id,
           name        => $name,
           parent      => $parent,
-          path        => $path->utf8,
+          path        => $path,
           prefix      => $pref,
           title       => ucfirst $name,
           type        => 'file',
@@ -154,41 +136,25 @@ sub clone (;$) {
    return $v;
 }
 
-sub env_var ($;$) {
-   my $k = (uc split_on_dash my_prefix $PROGRAM_NAME).'_'.$_[ 0 ];
+sub enhance ($) {
+   my $conf = shift;
+   my $attr = { config => { %{ $conf } }, }; $conf = $attr->{config};
 
-   return defined $_[ 1 ] ? $ENV{ $k } = $_[ 1 ] : $ENV{ $k };
+   $conf->{appclass    } or  throw Unspecified, [ 'application class' ];
+   $attr->{config_class} //= $conf->{appclass}.'::Config';
+   $conf->{name        } //= app_prefix   $conf->{appclass};
+   $conf->{home        } //= find_apphome $conf->{appclass}, $conf->{home};
+   $conf->{cfgfiles    } //= get_cfgfiles $conf->{appclass}, $conf->{home};
+
+   $conf->{l10n_attributes}->{domains} = [ $conf->{name} ];
+
+   return $attr;
 }
 
-sub extract_lang ($) {
-   my $v = shift; return $v ? (split m{ _ }mx, $v)[ 0 ] : LANG;
-}
+sub env_var ($$;$) {
+   my ($class, $var, $v) = @_; my $k = (env_prefix $class)."_${var}";
 
-sub load_components ($$;$) {
-   my ($builder, $search_path, $opts) = @_; $opts //= {};
-
-   blessed $builder or throw 'Builder [_1] not an object', [ $builder ];
-   $search_path     or throw Unspecified, [ 'search path' ];
-   $opts->{builder} //= $builder;
-
-   my $config   = $builder->config; my $appclass = $config->appclass;
-
-   if (first_char $search_path eq '+') { $search_path = substr $search_path, 1 }
-   else { $search_path = "${appclass}::${search_path}" }
-
-   my $depth    = () = split m{ :: }mx, $search_path, -1; $depth += 1;
-   my $finder   = Module::Pluggable::Object->new
-      ( max_depth   => $depth,           min_depth => $depth,
-        search_path => [ $search_path ], require   => TRUE, );
-   my $compos   = $opts->{components} = {}; # Dependency injection
-
-   for my $class ($finder->plugins) {
-     (my $klass = $class) =~ s{ \A $appclass :: }{}mx;
-      my $attr  = { %{ $config->components->{ $klass } // {} }, %{ $opts } };
-      my $comp  = $class->new( $attr ); $compos->{ $comp->moniker } = $comp;
-   }
-
-   return $compos;
+   return defined $v ? $ENV{ $k } = $v : $ENV{ $k };
 }
 
 sub make_id_from ($) {
@@ -207,10 +173,6 @@ sub make_name_from ($) {
 
 sub mtime ($) {
    return $_[ 0 ]->{tree}->{_mtime};
-}
-
-sub new_uri ($$) {
-   return bless $_uric_escape->( $_[ 0 ] ), 'URI::'.$_[ 1 ];
 }
 
 sub set_element_focus ($$) {

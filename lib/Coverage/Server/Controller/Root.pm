@@ -2,7 +2,7 @@ package Coverage::Server::Controller::Root;
 
 use Web::Simple;
 
-with 'Coverage::Server::Role::Component';
+with 'Web::Components::Role';
 
 has '+moniker' => default => 'root';
 

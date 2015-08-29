@@ -2,49 +2,32 @@ package Coverage::Server::Listener;
 
 use namespace::autoclean;
 
-use Coverage::Server::Functions qw( env_var );
 use Class::Usul;
-use Class::Usul::Constants      qw( EXCEPTION_CLASS FALSE NUL TRUE );
-use Class::Usul::Functions      qw( app_prefix ensure_class_loaded
-                                    find_apphome get_cfgfiles throw );
-use Class::Usul::Types          qw( BaseType );
+use Class::Usul::Constants      qw( NUL TRUE );
+use Class::Usul::Functions      qw( ensure_class_loaded );
+use Class::Usul::Types          qw( HashRef Plinth );
+use Coverage::Server::Functions qw( enhance env_var );
 use Plack::Builder;
-use Unexpected::Functions       qw( Unspecified );
 use Web::Simple;
 
-# Attribute constructors
-my $_build_usul = sub {
-   my $self = shift;
-   my $attr = { config => $self->config, debug => env_var( 'DEBUG' ) // FALSE };
-   my $conf = $attr->{config};
+# Private attributes
+has '_config_attr' => is => 'ro',   isa => HashRef,
+   builder         => sub { {} }, init_arg => 'config';
 
-   $conf->{appclass    } or  throw Unspecified, [ 'application class' ];
-   $attr->{config_class} //= $conf->{appclass}.'::Config';
-   $conf->{name        } //= app_prefix   $conf->{appclass};
-   $conf->{home        } //= find_apphome $conf->{appclass}, $conf->{home};
-   $conf->{cfgfiles    } //= get_cfgfiles $conf->{appclass}, $conf->{home};
+has '_usul'        => is => 'lazy', isa => Plinth,
+   builder         => sub { Class::Usul->new( enhance $_[ 0 ]->_config_attr ) },
+   handles         => [ 'config', 'debug', 'l10n', 'lock', 'log' ];
 
-   $conf->{l10n_attributes}->{domains} = [ $conf->{name} ];
-
-   return Class::Usul->new( $attr );
-};
-
-# Public attributes
-has 'usul' => is => 'lazy', isa => BaseType,
-   builder => $_build_usul, handles => [ 'log' ];
-
-with 'Coverage::Server::Role::ComponentLoading';
+with 'Web::Components::Loader';
 
 # Construction
 around 'to_psgi_app' => sub {
    my ($orig, $self, @args) = @_; my $app = $orig->( $self, @args );
 
-   my $conf   = $self->usul->config;
-   my $point  = $conf->mount_point;
-   my $static = $conf->serve_as_static;
+   my $conf = $self->config; my $static = $conf->serve_as_static;
 
    return builder {
-      mount "${point}" => builder {
+      mount $conf->mount_point => builder {
          enable 'ContentLength';
          enable 'FixMissingBodyInRedirect';
          enable "ConditionalGET";
@@ -53,11 +36,13 @@ around 'to_psgi_app' => sub {
          enable 'Static',
             path => qr{ \A / (?: $static ) }mx, root => $conf->root;
          enable 'Session::Cookie',
-            expires     => 7_776_000, httponly => TRUE,
-            path        => $point,    secret   => NUL.$conf->secret,
+            expires     => 7_776_000,
+            httponly    => TRUE,
+            path        => $conf->mount_point,
+            secret      => $conf->secret.NUL,
             session_key => 'coverage_session';
-         enable "LogDispatch", logger => $self->usul->log;
-         enable_if { $self->usul->debug } 'Debug';
+         enable "LogDispatch", logger => $self->log;
+         enable_if { $self->debug } 'Debug';
          $app;
       };
    };
@@ -65,21 +50,15 @@ around 'to_psgi_app' => sub {
 
 sub BUILD {
    my $self   = shift;
+   my $conf   = $self->config;
    my $server = ucfirst( $ENV{PLACK_ENV} // NUL );
-   my $port   = env_var( 'PORT' ) ? ' on port '.env_var( 'PORT' ) : NUL;
-   my $class  = $self->usul->config->appclass; ensure_class_loaded $class;
-   my $ver    = $class->VERSION;
+   my $class  = $conf->appclass; ensure_class_loaded $class;
+   my $port   = env_var $class, 'PORT';
+   my $info   = 'v'.$class->VERSION; $port and $info .= " on port ${port}";
 
-   $self->log->info( "${server} Server started v${ver}${port}" );
+   $self->log->info( "${server} Server started ${info}" );
 
    return;
-}
-
-# Public methods
-sub dispatch_request {
-   my $f = sub () { my $self = shift; response_filter { $self->render( @_ ) } };
-
-   return $f, map { $_->dispatch_request } @{ $_[ 0 ]->controllers };
 }
 
 1;

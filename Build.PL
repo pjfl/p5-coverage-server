@@ -40,6 +40,11 @@ my $prereqs  = {
     'perl' => '5.010001',
     'strictures' => '2.000000'
   },
+  'test_requires' => {
+    'File::Spec' => '0',
+    'Module::Metadata' => '0',
+    'Sys::Hostname' => '0'
+  },
 };
 my $testing  = sub { $ENV{AUTOMATED_TESTING}
                   || $ENV{PERL_CPAN_REPORTER_CONFIG}

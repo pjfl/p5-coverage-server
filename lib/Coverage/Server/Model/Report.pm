@@ -7,10 +7,8 @@ use Coverage::Server::Functions qw( build_navigation_list
 use Class::Usul::Constants      qw( FALSE NUL TRUE );
 use Class::Usul::Functions      qw( symlink throw );
 use Class::Usul::Response::Table;
-use File::Spec::Functions       qw( updir );
 use HTTP::Status                qw( HTTP_OK );
 use JSON::MaybeXS               qw( decode_json encode_json );
-use Scalar::Util                qw( blessed );
 use SVG;
 use Moo;
 
@@ -90,8 +88,7 @@ my $_create_summary_table = sub {
    } );
 };
 
-my $_get_coverage_data = sub {
-   # TODO: This method needs caching
+my $_get_coverage_data = sub { # TODO: This method needs caching
    my ($self, $dist, $version) = @_; $version //= 'latest';
 
    my $file = $self->config->datadir->catfile( $dist, $version );
@@ -227,10 +224,10 @@ my $_initialise_page = sub {
 around 'load_page' => sub {
    my ($orig, $self, $req, @args) = @_;
 
-   $args[ 0 ] and return $orig->( $self, $req, $args[ 0 ] );
+   $args[ 0 ] and return $orig->( $self, $req, @args );
 
-   my $dist = $req->args_params->( 0, { optional => TRUE } );
-   my $ver  = $req->args_params->( 1, { optional => TRUE } );
+   my $dist = $req->uri_params->( 0, { optional => TRUE } );
+   my $ver  = $req->uri_params->( 1, { optional => TRUE } );
 
    $dist and not $ver and $ver = 'latest';
 
@@ -251,8 +248,7 @@ sub BUILD {
 sub add_report {
    my ($self, $req) = @_;
 
-   my $updir   = updir;
-   my $dist    = $req->args_params->( 0 ); $dist =~ s{ \Q$updir\E }{}gmx;
+   my $dist    = $req->uri_params->( 0 );
    my $body_p  = $req->body_params;
    my $info    = $body_p->( 'info',    { raw => TRUE } );
    my $summary = $body_p->( 'summary', { raw => TRUE } );
@@ -277,8 +273,8 @@ sub add_report {
 sub get_badge {
    my ($self, $req) = @_;
 
-   my $dist    = $req->args_params->( 0 );
-   my $version = $req->args_params->( 1, { optional => TRUE } );
+   my $dist    = $req->uri_params->( 0 );
+   my $version = $req->uri_params->( 1, { optional => TRUE } );
    my $data    = $self->$_get_coverage_data( $dist, $version );
    my $content = $_create_coverage_badge->( @{ $data } );
 
@@ -294,10 +290,7 @@ sub get_latest {
 }
 
 sub get_reports {
-   my ($self, $req) = @_; my $stash = $self->initialise_stash( $req );
-
-   $stash->{page} = my $page = $self->load_page( $req );
-   $stash->{nav } = $self->navigation( $req, $stash );
+   my ($self, $req) = @_;
 
    my $tree = $self->$_report_tree; my $cache = $_distribution_cache->{index};
 
@@ -306,10 +299,13 @@ sub get_reports {
          = { table => $self->$_create_distribution_table( $req ),
              mtime => $tree->{mtime}, };
 
-   $page->{content} = { data => $cache->{table},
-                        type => 'table', widget => TRUE };
-   $page->{title  } = $req->loc( 'Coverage by Distribution' );
-   return $stash;
+   my $page = { content   => {
+                   data   => $cache->{table},
+                   type   => 'table',
+                   widget => TRUE, },
+                title     => $req->loc( 'Coverage by Distribution' ), };
+
+   return $self->get_content( $req, $page );
 }
 
 sub navigation {
@@ -317,11 +313,10 @@ sub navigation {
 
    my $root   = $self->config->datadir;
    my $tree   = $self->$_report_tree;
-   my $dist   = $req->args_params->( 0, { optional => TRUE } );
-   my $ver    = $req->args_params->( 1, { optional => TRUE } );
+   my $dist   = $req->uri_params->( 0, { optional => TRUE } );
+   my $ver    = $req->uri_params->( 1, { optional => TRUE } );
    my $wanted = $dist ? $ver ? "${dist}/${ver}" : $dist : NUL;
    my $nav    = $_navigation_cache->{ $wanted };
-   my $updir  = updir; $dist and $dist =~ s{ \Q$updir\E }{}gmx;
 
    (not $nav or $tree->{mtime} > $nav->{mtime})
       and $nav = $_navigation_cache->{ $wanted }

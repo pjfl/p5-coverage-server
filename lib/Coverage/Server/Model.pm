@@ -2,35 +2,38 @@ package Coverage::Server::Model;
 
 use namespace::autoclean;
 
-use Class::Usul::Constants qw( NUL );
-use Class::Usul::Functions qw( is_member throw );
-use Class::Usul::Time      qw( str2time time2str );
+use Class::Usul::Constants qw( NUL TRUE );
+use Class::Usul::Functions qw( throw );
+use Class::Usul::Types     qw( Plinth );
 use HTTP::Status           qw( HTTP_BAD_REQUEST HTTP_NOT_FOUND HTTP_OK );
-use Scalar::Util           qw( blessed weaken );
+use Scalar::Util           qw( blessed );
 use Moo;
 
-with 'Coverage::Server::Role::Component';
+with q(Web::Components::Role);
+
+# Public attributes
+has 'application' => is => 'ro', isa => Plinth,
+   required       => TRUE,  weak_ref => TRUE;
 
 # Public methods
 sub exception_handler {
    my ($self, $req, $e) = @_;
 
-   my $stash  = $self->initialise_stash( $req );
-   my $title  = $req->loc( 'Exception Handler' );
-   my $errors = $e->args->[ 0 ] && blessed $e->args->[ 0 ]
-              ? [ map { "${_}" } @{ $e->args } ] : [];
+   my $name     =  $req->loc( 'Exception Handler' );
+   my $errors   =  $e->args->[ 0 ] && blessed $e->args->[ 0 ]
+                ?  [ map { "${_}" } @{ $e->args } ] : [];
+   my $page     =  {
+      errors    => $errors,
+      exception => "${e}",
+      mtime     => time,
+      name      => $name,
+      rv        => $e->rv,
+      template  => [ 'report', 'exception' ],
+      title     => ucfirst $name,
+      type      => 'generated' };
+   my $stash    =  $self->get_content( $req, $page );
 
-   $stash->{code} =  $e->rv >= HTTP_OK ? $e->rv : HTTP_BAD_REQUEST;
-   $stash->{page} =  $self->load_page( $req, {
-      errors      => $errors,
-      exception   => "${e}",
-      mtime       => time,
-      name        => $title,
-      rv          => $e->rv,
-      title       => $title,
-      type        => 'generated' } );
-   $stash->{page}->{template}->[ 1 ] = 'exception';
-   $stash->{nav } =  $self->navigation( $req, $stash );
+   $stash->{code} = $e->rv >= HTTP_OK ? $e->rv : HTTP_BAD_REQUEST;
 
    return $stash;
 }
@@ -45,31 +48,20 @@ sub execute {
 }
 
 sub get_content {
-   my ($self, $req) = @_; my $stash = $self->initialise_stash( $req );
+   my ($self, $req, $page) = @_; my $stash = $self->initialise_stash( $req );
 
-   $stash->{page} = $self->load_page ( $req );
+   $stash->{page} = $self->load_page ( $req, $page  );
    $stash->{nav } = $self->navigation( $req, $stash );
 
    return $stash;
 }
 
 sub initialise_stash {
-   my ($self, $req) = @_; weaken( $req );
-
-   return { code         => HTTP_OK,
-            functions    => {
-               is_member => \&is_member,
-               loc       => sub { $req->loc( @_ ) },
-               str2time  => \&str2time,
-               time2str  => \&time2str,
-               ucfirst   => sub { ucfirst $_[ 0 ] },
-               uri_for   => sub { $req->uri_for( @_ ), }, },
-            req          => $req,
-            view         => $self->config->default_view, };
+   return { code => HTTP_OK, view => $_[ 0 ]->config->default_view, };
 }
 
 sub load_page {
-   my ($self, $req, $args) = @_; my $page = $args // {}; return $page;
+   my ($self, $req, $page) = @_; $page //= {}; return $page;
 }
 
 sub navigation {
@@ -82,19 +74,19 @@ sub navigation {
 sub not_found {
    my ($self, $req) = @_;
 
-   my $stash = $self->initialise_stash( $req );
-   my $title = $req->loc( 'Not Found' );
+   my $name     =  $req->loc( 'Not Found' );
+   my $wanted   =  $req->uri_params->( 0, { optional => TRUE } );
+   my $page     =  {
+      exception => $req->loc( 'Page "[_1]" not found', $wanted ),
+      mtime     => time,
+      name      => $name,
+      rv        => HTTP_NOT_FOUND,
+      template  => [ 'report', 'exception' ],
+      title     => ucfirst $name,
+      type      => 'generated' };
+   my $stash    =  $self->get_content( $req, $page );
 
-   $stash->{code} =  HTTP_NOT_FOUND;
-   $stash->{page} =  $self->load_page( $req, {
-      exception   => $req->loc( 'Page "[_1]" not found', $req->args->[ 0 ] ),
-      mtime       => time,
-      name        => $title,
-      rv          => HTTP_NOT_FOUND,
-      title       => $title,
-      type        => 'generated' } );
-   $stash->{page}->{template}->[ 1 ] = 'exception';
-   $stash->{nav } =  $self->navigation( $req, $stash );
+   $stash->{code} = HTTP_NOT_FOUND;
 
    return $stash;
 }

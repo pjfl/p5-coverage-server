@@ -5,7 +5,7 @@ use namespace::autoclean;
 use Class::Usul::Constants qw( NUL TRUE );
 use File::DataClass::Types qw( ArrayRef Bool HashRef NonEmptySimpleStr
                                NonZeroPositiveInt Object Path
-                               PositiveInt SimpleStr Str );
+                               PositiveInt SimpleStr Str Undef );
 use Type::Utils            qw( as coerce from subtype via );
 use Moo;
 
@@ -125,15 +125,10 @@ has 'owner'           => is => 'lazy', isa => NonEmptySimpleStr,
 has 'port'            => is => 'lazy', isa => NonZeroPositiveInt,
    default            => 2015;
 
-has 'preferences'     => is => 'ro',   isa => ArrayRef[NonEmptySimpleStr],
-   builder            => sub { [ qw( query skin theme use_flags ) ] };
-
-has 'query'           => is => 'ro',   isa => SimpleStr, default => NUL;
-
 has 'repo_url'        => is => 'ro',   isa => SimpleStr, default => NUL;
 
-has 'request_class'   => is => 'ro',   isa => NonEmptySimpleStr,
-   default            => 'Coverage::Server::Request';
+has 'request_roles'   => is => 'ro',   isa => ArrayRef[NonEmptySimpleStr],
+   builder            => sub { [ 'L10N', 'Session', 'JSON' ] };
 
 has 'scrubber'        => is => 'ro',   isa => Str,
    default            => '[^ +\-\./0-9@A-Z\\_a-z~]';
@@ -147,19 +142,27 @@ has 'serve_as_static' => is => 'ro',   isa => NonEmptySimpleStr,
 has 'server'          => is => 'ro',   isa => NonEmptySimpleStr,
    default            => 'Starman';
 
+has 'session_attr'    => is => 'lazy', isa => HashRef[ArrayRef],
+   builder            => sub { {
+      query           => [ SimpleStr | Undef                ],
+      skin            => [ NonEmptySimpleStr, $_[ 0 ]->skin ],
+      theme           => [ NonEmptySimpleStr, 'green'       ],
+      use_flags       => [ Bool,              TRUE          ], } };
+
 has 'skin'            => is => 'ro',   isa => NonEmptySimpleStr,
    default            => 'default';
+
+has 'stash_attr'      => is => 'lazy', isa => HashRef[ArrayRef],
+   builder            => sub { {
+      config          => [ qw( author description keywords template ) ],
+      request         => [ qw( authenticated host language username ) ],
+      session         => [ sort keys %{ $_[ 0 ]->session_attr } ], } };
 
 has 'template'        => is => 'ro',   isa => ArrayRef[NonEmptySimpleStr],
    default            => sub { [ 'report', 'report' ] };
 
-has 'theme'           => is => 'ro',   isa => NonEmptySimpleStr,
-   default            => 'green';
-
 has 'title'           => is => 'ro',   isa => NonEmptySimpleStr,
    default            => 'Coverage Statistics';
-
-has 'use_flags'       => is => 'ro',   isa => Bool, default => TRUE;
 
 has 'user'            => is => 'ro',   isa => SimpleStr, default => NUL;
 
@@ -418,21 +421,10 @@ A non empty simple string the defaults to F<posts>.  The directory
 name where dated markdown files are created in category
 directories. These are the blogs posts or news articles
 
-=item C<preferences>
+=item C<request_roles>
 
-An array reference that defaults to
-C<[ code_blocks float skin theme use_flags ]>. List of attributes that can be
-specified as query parameters in URIs.  Their values are persisted between
-requests stored in cookie
-
-=item C<query>
-
-Default search string
-
-=item C<request_class>
-
-Defaults to C<Coverage::Server::Request>. The lazy loaded class used as the per
-request object
+Defaults to C<L10N>, C<Session>, and C<JSON>. The list of roles to apply to
+the default request base class
 
 =item C<repo_url>
 
@@ -460,31 +452,72 @@ by L<Plack::Middleware::Static>
 A non empty simple string that defaults to C<Starman>. The L<Plack> engine
 name to load when the documentation server is started in production mode
 
-=item C<skin>
+=item C<session_attr>
 
-A non empty simple string that defaults to C<default>. The name of the default
-skin used to theme the appearance of the application
+A hash reference of array references. These attributes are added to the ones
+in L<Web::ComposableRequest::Session> to created the session class. The hash
+key is the attribute name and the tuple consists of a type and a optional
+default value. The default list of attributes is;
 
-=item C<template>
+=over 3
 
-If the selected L<Template::Toolkit> layout is F<standard> then this
-attribute selects which left and right columns templates are rendered
+=item C<query>
+
+Default search string
 
 =item C<theme>
 
 A non empty simple string that defaults to C<green>. The name of the
 default colour scheme
 
-=item C<title>
-
-A non empty simple string that defaults to C<Documentation>. The documentation
-project's title as displayed in the title bar of all pages
-
 =item C<use_flags>
 
 Boolean which defaults to C<TRUE>. Display the language code, which is
 derived from browsers accept language header value, as a national flag. If
 false display as text
+
+=back
+
+=item C<skin>
+
+A non empty simple string that defaults to C<default>. The name of the default
+skin used to theme the appearance of the application
+
+=item C<stash_attr>
+
+A hash reference of array references. The keys indicate a data source and the
+values are lists of attribute names. The values of the named attributes are
+copied into the stash. Defines the following keys and values;
+
+=over 3
+
+=item C<config>
+
+The list of configuration attributes whose values are copied to the C<page>
+hash reference in the stash
+
+=item C<request>
+
+The list of request attributes whose values are copied to the C<page> hash
+reference in the stash
+
+=item C<session>
+
+An array reference that defaults to the keys of the L</session_attr> hash
+reference. List of attributes that can be specified as query parameters in
+URIs. Their values are persisted between requests stored in the session store
+
+=back
+
+=item C<template>
+
+If the selected L<Template::Toolkit> layout is F<standard> then this
+attribute selects which left and right columns templates are rendered
+
+=item C<title>
+
+A non empty simple string that defaults to C<Documentation>. The documentation
+project's title as displayed in the title bar of all pages
 
 =item C<user>
 
