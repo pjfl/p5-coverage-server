@@ -19,7 +19,6 @@ $EVAL_ERROR and plan skip_all => 'Test::Pod::Coverage 1.04 required';
 
 pod_coverage_ok( 'Coverage::Server' );
 pod_coverage_ok( 'Coverage::Server::Config'  );
-pod_coverage_ok( 'Coverage::Server::Request' );
 
 done_testing;
 
