@@ -14,8 +14,6 @@ use Moo;
 
 extends 'Coverage::Server::Model';
 with    'Coverage::Server::Role::PageConfiguration';
-with    'Coverage::Server::Role::CommonLinks';
-with    'Coverage::Server::Role::Preferences';
 
 # Public attributes
 has '+moniker' => default => 'report';
