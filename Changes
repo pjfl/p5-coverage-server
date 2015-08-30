@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+          - Moved cdnjs to config file
           - Updated skip lists
           - Uses Web::Components
           - Accepts summaries serves badges

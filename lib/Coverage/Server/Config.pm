@@ -24,6 +24,13 @@ my $_to_array_of_hash = sub {
 };
 
 # Attribute constructors
+my $_build_cdnjs = sub {
+   my $self  = shift;
+   my %cdnjs = map { $_->[ 0 ] => $self->cdn.$_->[ 1 ] } @{ $self->jslibs };
+
+   return \%cdnjs;
+};
+
 my $_build_links = sub {
    return $_to_array_of_hash->( $_[ 0 ]->_links, 'name', 'url' );
 };
@@ -42,16 +49,10 @@ has 'assets'          => is => 'ro',   isa => NonEmptySimpleStr,
 has 'author'          => is => 'ro',   isa => NonEmptySimpleStr,
    default            => 'anon';
 
-has 'cdn'             => is => 'ro',   isa => SimpleStr,
-   default            => 'http://cdnjs.cloudflare.com/ajax/libs/';
+has 'cdn'             => is => 'ro',   isa => SimpleStr, default => NUL;
 
-has 'cdnjs'           => is => 'lazy', isa => HashRef, builder => sub {
-   my $self = shift; my %cdnjs = map { $_->[ 0 ] => $self->cdn.$_->[ 1 ] }
-   [ less    => 'less.js/1.7.4/less.min.js' ],
-   [ moocore => 'mootools/1.4.5/mootools-core-full-nocompat.min.js' ],
-   [ moomore => 'mootools-more/1.4.0.1/mootools-more-yui-compressed.min.js' ];
-   return \%cdnjs;
-};
+has 'cdnjs'           => is => 'lazy', isa => HashRef,
+   builder            => $_build_cdnjs, init_arg => undef;
 
 has 'common_links'    => is => 'ro',   isa => ArrayRef[NonEmptySimpleStr],
    builder            => sub { [ qw( css help_url homepage images js ) ] };
@@ -86,6 +87,8 @@ has 'images'          => is => 'ro',   isa => NonEmptySimpleStr,
 
 has 'js'              => is => 'ro',   isa => NonEmptySimpleStr,
    default            => 'js/';
+
+has 'jslibs'          => is => 'ro',   isa => ArrayRef, builder => sub { [] };
 
 has 'keywords'        => is => 'ro',   isa => SimpleStr, default => NUL;
 
