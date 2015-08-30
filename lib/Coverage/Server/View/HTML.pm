@@ -2,7 +2,9 @@ package Coverage::Server::View::HTML;
 
 use namespace::autoclean;
 
+use Class::Usul::Constants qw( TRUE );
 use Class::Usul::Functions qw( is_hashref );
+use Class::Usul::Types     qw( Plinth );
 use Encode                 qw( encode );
 use HTML::FormWidgets;
 use Moo;
@@ -11,7 +13,10 @@ with q(Web::Components::Role);
 with q(Coverage::Server::Role::Templates);
 
 # Public attributes
-has '+moniker' => default => 'html';
+has 'application' => is => 'ro', isa => Plinth,
+   required       => TRUE,  weak_ref => TRUE;
+
+has '+moniker'    => default => 'html';
 
 # Private functions
 my $_header = sub {

@@ -24,6 +24,7 @@ around 'initialise_stash' => sub {
       catch { $self->log->warn( $_ ) };
    }
 
+   $stash->{skin } = delete $stash->{prefs}->{skin};
    $stash->{links}->{cdnjs   } = $conf->cdnjs;
    $stash->{links}->{base_uri} = $req->base;
    $stash->{links}->{req_uri } = $req->uri;
@@ -44,7 +45,7 @@ around 'load_page' => sub {
 
    for my $k (@{ $conf->stash_attr->{config } }) { $page->{ $k } //= $conf->$k }
 
-   $page->{application_version} = $Coverage::Server::VERSION;
+   $page->{application_version} = $conf->appclass->VERSION;
    $page->{status_message     } = $req->session->collect_status_message( $req );
 
    $page->{hint  } //= $req->loc( 'Hint' );

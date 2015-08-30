@@ -2,7 +2,7 @@ package Coverage::Server;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 8 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 9 $ =~ /\d+/gmx );
 
 use Class::Usul;
 use Class::Usul::Constants      qw( NUL TRUE );
@@ -17,7 +17,7 @@ has '_config_attr' => is => 'ro',   isa => HashRef,
 
 has '_usul'        => is => 'lazy', isa => Plinth,
    builder         => sub { Class::Usul->new( enhance $_[ 0 ]->_config_attr ) },
-   handles         => [ 'config', 'debug', 'l10n', 'lock', 'log' ];
+   handles         => [ 'config', 'debug', 'dumper', 'l10n', 'lock', 'log' ];
 
 with 'Web::Components::Loader';
 

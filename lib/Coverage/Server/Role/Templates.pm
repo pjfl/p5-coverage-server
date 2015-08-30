@@ -6,7 +6,6 @@ use Class::Usul::Constants qw( EXCEPTION_CLASS NUL TRUE );
 use Class::Usul::Functions qw( is_member throw );
 use Class::Usul::Time      qw( str2time time2str );
 use File::DataClass::Types qw( Directory Object );
-use File::Spec::Functions  qw( catfile );
 use Scalar::Util           qw( weaken );
 use Template;
 use Unexpected::Functions  qw( PathNotFound );
@@ -14,7 +13,7 @@ use Moo::Role;
 
 requires qw( config );
 
-has 'encoder'      => is => 'lazy', isa => Object, builder => sub {
+has 'templater'    => is => 'lazy', isa => Object, builder => sub {
    my $self        =  shift;
    my $args        =  {
       COMPILE_DIR  => $self->config->tempdir->catdir( 'ttc' ),
@@ -35,16 +34,16 @@ sub render_template {
    my ($self, $req, $stash) = @_;
 
    my $result =  NUL;
-   my $prefs  =  $stash->{prefs } // {};
-   my $conf   =  $stash->{config} = $self->config;
-   my $skin   =  $stash->{skin  } = $prefs->{skin} // $conf->skin;
-   my $page   =  $stash->{page  } // {};
-   my $layout = ($page->{layout} //= $conf->layout).'.tt';
-   my $path   =  $self->templates->catdir( $skin )->catfile( $layout );
+   my $conf   =  $stash->{config} //= $self->config;
+   my $skin   =  $stash->{skin  } //= $conf->skin;
+   my $page   =  $stash->{page  } //= {};
+   my $layout = ($page->{layout } //= $conf->layout).'.tt';
+   my $path   =  $self->templates->catfile( $skin, $layout );
 
    $path->exists or throw PathNotFound, [ $path ];
-   $self->encoder->process( catfile( $skin, $layout ), $stash, \$result )
-      or throw $self->encoder->error;
+   $self->templater->process
+      ( $path->abs2rel( $self->templates ), $stash, \$result )
+      or throw $self->templater->error;
 
    return $result;
 }

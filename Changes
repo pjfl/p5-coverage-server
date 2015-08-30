@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+          - Made dumper available via application attribute
           - Merged CommonLinks and Preferences in PageConfiguration
           - Moved Listener to Server
           - Moved cdnjs to config file
