@@ -89,7 +89,13 @@ The configuration file defaults to `lib/Coverage/Server/coverage-server.json`
 
 # Subroutines/Methods
 
-None
+## `BUILD`
+
+Log some diagnostic information when the application starts
+
+## `to_psgi_app`
+
+Load the ["Plack"](#plack) stack with middleware
 
 # Diagnostics
 

@@ -2,7 +2,7 @@ package Coverage::Server;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 9 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.2.%d', q$Rev: 1 $ =~ /\d+/gmx );
 
 use Class::Usul;
 use Class::Usul::Constants      qw( NUL TRUE );
@@ -163,7 +163,13 @@ The configuration file defaults to F<lib/Coverage/Server/coverage-server.json>
 
 =head1 Subroutines/Methods
 
-None
+=head2 C<BUILD>
+
+Log some diagnostic information when the application starts
+
+=head2 C<to_psgi_app>
+
+Load the L</Plack> stack with middleware
 
 =head1 Diagnostics
 

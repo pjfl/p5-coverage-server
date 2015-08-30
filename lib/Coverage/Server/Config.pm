@@ -274,13 +274,8 @@ A simple string containing the URI prefix for the content delivery network
 
 =item C<cdnjs>
 
-A hash reference of partial URIs for JavaScript libraries stored on the
-content delivery network
-
-=item C<code_blocks>
-
-An integer which defaults to 1. Can be 1 (shown code blocks), 2 (show
-code blocks inline), or 3 (hide code blocks)
+A hash reference of URIs for JavaScript libraries stored on the
+content delivery network. Created by prepending L</cdn> to L</jslibs>
 
 =item C<colours>
 
@@ -351,6 +346,12 @@ locates the static image files
 A non empty simple string that defaults to F<js/>. Relative URI path that
 locates the static JavaScript files
 
+=item C<jslibs>
+
+An array reference of tuples. Each tuple consists of a library and a partial
+URI path. Default to an empty list so this is usually set from the
+configuration file
+
 =item C<keywords>
 
 A simple string that defaults to null. The HTML meta attributes keyword
@@ -417,12 +418,6 @@ directories in the application when installed
 A lazily evaluated non zero positive integer that defaults to 8085. This
 is the port number that the documentation server will listen on by default
 when started by the control daemon
-
-=item C<posts>
-
-A non empty simple string the defaults to F<posts>.  The directory
-name where dated markdown files are created in category
-directories. These are the blogs posts or news articles
 
 =item C<request_roles>
 

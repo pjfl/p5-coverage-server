@@ -10,7 +10,6 @@ my $name     = 'Coverage-Server'; $name =~ s{ - }{::}gmx;
 my $prereqs  = {
   'build_requires' => {
     'Module::Build' => '0.4004',
-    'Test::Requires' => '0.06',
     'version' => '0.88'
   },
   'configure_requires' => {
@@ -18,11 +17,10 @@ my $prereqs  = {
     'version' => '0.88'
   },
   'requires' => {
-    'Class::Usul' => 'v0.63.0',
+    'Class::Usul' => 'v0.65.0',
     'Exporter::Tiny' => '0.042',
-    'File::DataClass' => 'v0.63.0',
+    'File::DataClass' => 'v0.66.0',
     'HTML::FormWidgets' => 'v0.23.0',
-    'HTTP::Body' => '1.22',
     'HTTP::Message' => '6.06',
     'JSON::MaybeXS' => '1.003005',
     'Moo' => '2.000001',
@@ -31,8 +29,8 @@ my $prereqs  = {
     'Template' => '2.26',
     'Try::Tiny' => '0.22',
     'Type::Tiny' => '1.000005',
-    'URI' => '1.67',
-    'Unexpected' => 'v0.38.0',
+    'Unexpected' => 'v0.39.0',
+    'Web::Components' => 'v0.4.0',
     'Web::Simple' => '0.030',
     'local::lib' => '2.000015',
     'namespace::autoclean' => '0.26',
@@ -42,8 +40,11 @@ my $prereqs  = {
   },
   'test_requires' => {
     'File::Spec' => '0',
+    'Module::Build' => '0.4004',
     'Module::Metadata' => '0',
-    'Sys::Hostname' => '0'
+    'Sys::Hostname' => '0',
+    'Test::Requires' => '0.06',
+    'version' => '0.88'
   },
 };
 my $testing  = sub { $ENV{AUTOMATED_TESTING}
