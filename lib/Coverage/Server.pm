@@ -1,8 +1,64 @@
 package Coverage::Server;
 
 use 5.010001;
-use strictures;
-use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 6 $ =~ /\d+/gmx );
+use namespace::autoclean;
+use version; our $VERSION = qv( sprintf '0.1.%d', q$Rev: 7 $ =~ /\d+/gmx );
+
+use Class::Usul;
+use Class::Usul::Constants      qw( NUL TRUE );
+use Class::Usul::Types          qw( HashRef Plinth );
+use Coverage::Server::Functions qw( enhance env_var );
+use Plack::Builder;
+use Web::Simple;
+
+# Private attributes
+has '_config_attr' => is => 'ro',   isa => HashRef,
+   builder         => sub { {} }, init_arg => 'config';
+
+has '_usul'        => is => 'lazy', isa => Plinth,
+   builder         => sub { Class::Usul->new( enhance $_[ 0 ]->_config_attr ) },
+   handles         => [ 'config', 'debug', 'l10n', 'lock', 'log' ];
+
+with 'Web::Components::Loader';
+
+# Construction
+around 'to_psgi_app' => sub {
+   my ($orig, $self, @args) = @_; my $app = $orig->( $self, @args );
+
+   my $conf = $self->config; my $static = $conf->serve_as_static;
+
+   return builder {
+      mount $conf->mount_point => builder {
+         enable 'ContentLength';
+         enable 'FixMissingBodyInRedirect';
+         enable "ConditionalGET";
+         enable 'Deflater',
+            content_type => $conf->deflate_types, vary_user_agent => TRUE;
+         enable 'Static',
+            path => qr{ \A / (?: $static ) }mx, root => $conf->root;
+         enable 'Session::Cookie',
+            expires     => 7_776_000,
+            httponly    => TRUE,
+            path        => $conf->mount_point,
+            secret      => $conf->secret.NUL,
+            session_key => 'coverage_session';
+         enable "LogDispatch", logger => $self->log;
+         enable_if { $self->debug } 'Debug';
+         $app;
+      };
+   };
+};
+
+sub BUILD {
+   my $self   = shift;
+   my $server = ucfirst( $ENV{PLACK_ENV} // NUL );
+   my $port   = env_var $self->config->appclass, 'PORT';
+   my $info   = 'v'.$VERSION; $port and $info .= " on port ${port}";
+
+   $self->log->info( "${server} Server started ${info}" );
+
+   return;
+}
 
 1;
 
