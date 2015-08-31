@@ -1,5 +1,7 @@
 Revision history for Coverage::Server
 
+          - Merged Config common_links into stash_attr
+
 0.2.1     2015-08-30 22:52:18
           - Made dumper available via application attribute
           - Merged CommonLinks and Preferences in PageConfiguration

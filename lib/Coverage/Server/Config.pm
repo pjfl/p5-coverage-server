@@ -54,9 +54,6 @@ has 'cdn'             => is => 'ro',   isa => SimpleStr, default => NUL;
 has 'cdnjs'           => is => 'lazy', isa => HashRef,
    builder            => $_build_cdnjs, init_arg => undef;
 
-has 'common_links'    => is => 'ro',   isa => ArrayRef[NonEmptySimpleStr],
-   builder            => sub { [ qw( css help_url homepage images js ) ] };
-
 has 'components'      => is => 'ro',   isa => HashRef, builder => sub { {} };
 
 has 'compress_css'    => is => 'ro',   isa => Bool, default => TRUE;
@@ -158,6 +155,7 @@ has 'skin'            => is => 'ro',   isa => NonEmptySimpleStr,
 has 'stash_attr'      => is => 'lazy', isa => HashRef[ArrayRef],
    builder            => sub { {
       config          => [ qw( author description keywords template ) ],
+      links           => [ qw( css help_url homepage images js ) ],
       request         => [ qw( authenticated host language username ) ],
       session         => [ sort keys %{ $_[ 0 ]->session_attr } ], } };
 
@@ -283,12 +281,6 @@ A lazily evaluated array reference of hashes created automatically from the
 hash reference in the configuration file. Each hash has a single
 key / value pair, the colour name and it's hash value. If specified
 creates a custom colour scheme for the project
-
-=item C<common_links>
-
-An array reference that defaults to C<[ assets css help_url images less js ]>.
-The application pre-calculates URIs for these static directories for use
-in the HTML templates
 
 =item C<components>
 
@@ -493,6 +485,12 @@ copied into the stash. Defines the following keys and values;
 
 The list of configuration attributes whose values are copied to the C<page>
 hash reference in the stash
+
+=item C<links>
+
+An array reference that defaults to C<[ assets css help_url images less js ]>.
+The application pre-calculates URIs for these static directories for use
+in the HTML templates
 
 =item C<request>
 
