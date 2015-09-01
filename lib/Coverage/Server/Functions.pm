@@ -2,7 +2,7 @@ package Coverage::Server::Functions;
 
 use 5.010001;
 use strictures;
-use parent  'Exporter::Tiny';
+use parent 'Exporter::Tiny';
 
 use Class::Usul::Constants qw( EXCEPTION_CLASS NUL );
 use Class::Usul::Functions qw( app_prefix env_prefix find_apphome first_char
@@ -38,32 +38,10 @@ my $_make_tuple = sub {
 };
 
 # Public functions
-sub iterator ($) {
-   my $tree = shift; my @folders = ( $_make_tuple->( $tree ) );
-
-   return sub {
-      while (my $tuple = $folders[ 0 ]) {
-         while (defined (my $k = $tuple->[ 1 ]->[ $tuple->[ 0 ]++ ])) {
-            my $node = $tuple->[ 2 ]->{tree}->{ $k };
-
-            $node->{type} eq 'folder'
-               and unshift @folders, $_make_tuple->( $node );
-
-            return $node;
-         }
-
-         shift @folders;
-      }
-
-      return;
-   };
-}
-
 sub build_navigation_list ($$$$) {
-   my ($root, $tree, $prefix, $ids) = @_; my @nav = ();
+   my ($root, $tree, $prefix, $ids) = @_; my $iter = iterator( $tree );
 
-   my $iter   = iterator $tree;
-   my $wanted = join '/', $prefix, grep { defined } @{ $ids };
+   my $wanted = join '/', $prefix, grep { defined } @{ $ids }; my @nav = ();
 
    while (defined (my $node = $iter->())) {
       $node->{id} eq 'latest' and next;
@@ -72,7 +50,7 @@ sub build_navigation_list ($$$$) {
 
       $link->{class}  = $node->{type} eq 'folder' ? 'folder-link' : 'file-link';
       $link->{tip  }  = $_get_tip_text->( $root, $node );
-      $link->{depth} -= 2;
+      $link->{depth} -= 1;
 
       if (defined $ids->[ 0 ] and $ids->[ 0 ] eq $node->{id}) {
          $link->{class} .= $node->{url} eq $wanted ? ' active' : ' open';
@@ -88,11 +66,9 @@ sub build_navigation_list ($$$$) {
 my $node_order;
 
 sub build_tree {
-   my ($dir, $url_base, $depth, $no_reset, $parent) = @_;
+   my ($dir, $url_base, $depth, $no_reset, $parent) = @_; $url_base //= NUL;
 
-   $url_base //= NUL; $depth //= 1; $depth++;
-
-   $no_reset or $node_order = 0; $parent //= NUL;
+   $depth //= 0; $depth++; $no_reset or $node_order = 0; $parent //= NUL;
 
    my $fcount = 0; my $max_mtime = 0; my $tree = {};
 
@@ -114,7 +90,7 @@ sub build_tree {
           url         => $url,
           _order      => $node_order++, };
 
-      $path->is_file and ++$fcount and $mtime > $max_mtime
+      $path->is_file and $fcount++ and $mtime > $max_mtime
                                    and $max_mtime = $mtime;
       $path->is_dir or next;
       $node->{type}  = 'folder';
@@ -155,6 +131,27 @@ sub env_var ($$;$) {
    my ($class, $var, $v) = @_; my $k = (env_prefix $class)."_${var}";
 
    return defined $v ? $ENV{ $k } = $v : $ENV{ $k };
+}
+
+sub iterator ($) {
+   my $tree = shift; my @folders = ( $_make_tuple->( $tree ) );
+
+   return sub {
+      while (my $tuple = $folders[ 0 ]) {
+         while (defined (my $k = $tuple->[ 1 ]->[ $tuple->[ 0 ]++ ])) {
+            my $node = $tuple->[ 2 ]->{tree}->{ $k };
+
+            $node->{type} eq 'folder'
+               and unshift @folders, $_make_tuple->( $node );
+
+            return $node;
+         }
+
+         shift @folders;
+      }
+
+      return;
+   };
 }
 
 sub make_id_from ($) {

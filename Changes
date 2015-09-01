@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+0.3.1     2015-09-01 09:38:19
           - Merged Config common_links into stash_attr
 
 0.2.1     2015-08-30 22:52:18
