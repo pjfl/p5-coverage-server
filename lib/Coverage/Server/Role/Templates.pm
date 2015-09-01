@@ -3,17 +3,16 @@ package Coverage::Server::Role::Templates;
 use namespace::autoclean;
 
 use Class::Usul::Constants qw( EXCEPTION_CLASS NUL TRUE );
-use Class::Usul::Functions qw( is_member throw );
-use Class::Usul::Time      qw( str2time time2str );
+use Class::Usul::Functions qw( throw );
 use File::DataClass::Types qw( Directory Object );
-use Scalar::Util           qw( weaken );
 use Template;
 use Unexpected::Functions  qw( PathNotFound );
 use Moo::Role;
 
 requires qw( config );
 
-has 'templater'    => is => 'lazy', isa => Object, builder => sub {
+# Attribute constructors
+my $_build__templater = sub {
    my $self        =  shift;
    my $args        =  {
       COMPILE_DIR  => $self->config->tempdir->catdir( 'ttc' ),
@@ -26,8 +25,12 @@ has 'templater'    => is => 'lazy', isa => Object, builder => sub {
    return $template;
 };
 
-has 'templates'    => is => 'lazy', isa => Directory, coerce => TRUE,
-   builder         => sub { $_[ 0 ]->config->root->catdir( 'templates' ) };
+# Public attributes
+has 'templates'  => is => 'lazy', isa => Directory, coerce => TRUE,
+   builder       => sub { $_[ 0 ]->config->root->catdir( 'templates' ) };
+
+# Private attributes
+has '_templater' => is => 'lazy', isa => Object, builder => $_build__templater;
 
 # Public methods
 sub render_template {
@@ -41,25 +44,12 @@ sub render_template {
    my $path   =  $self->templates->catfile( $skin, $layout );
 
    $path->exists or throw PathNotFound, [ $path ];
-   $self->templater->process
+   $self->_templater->process
       ( $path->abs2rel( $self->templates ), $stash, \$result )
-      or throw $self->templater->error;
+      or throw $self->_templater->error;
 
    return $result;
 }
-
-around 'render_template' => sub {
-   my ($orig, $self, $req, $stash) = @_; weaken( $req );
-
-   $stash->{is_member} = \&is_member;
-   $stash->{loc      } = sub { $req->loc( @_ ) };
-   $stash->{str2time } = \&str2time;
-   $stash->{time2str } = \&time2str;
-   $stash->{ucfirst  } = sub { ucfirst $_[ 0 ] };
-   $stash->{uri_for  } = sub { $req->uri_for( @_ ), };
-
-   return $orig->( $self, $req, $stash );
-};
 
 1;
 

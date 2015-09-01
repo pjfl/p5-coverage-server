@@ -6,12 +6,15 @@ use parent 'Exporter::Tiny';
 
 use Class::Usul::Constants qw( EXCEPTION_CLASS NUL );
 use Class::Usul::Functions qw( app_prefix env_prefix find_apphome first_char
-                               get_cfgfiles is_arrayref is_hashref throw );
+                               get_cfgfiles is_arrayref is_hashref is_member
+                               throw );
+use Class::Usul::Time      qw( str2time time2str );
+use Scalar::Util           qw( weaken );
 use Unexpected::Functions  qw( Unspecified );
 
 our @EXPORT_OK = qw( build_navigation_list build_tree clone env_var enhance
                      iterator make_id_from make_name_from mtime
-                     set_element_focus );
+                     set_element_focus stash_functions );
 
 # Private functions
 my $_get_tip_text = sub {
@@ -180,6 +183,18 @@ sub set_element_focus ($$) {
             'f.delay( 100 );', ];
 }
 
+sub stash_functions ($$$) {
+   my ($app, $req, $stash) = @_; weaken( $req );
+
+   $stash->{is_member} = \&is_member;
+   $stash->{loc      } = sub { $req->loc( @_ ) };
+   $stash->{str2time } = \&str2time;
+   $stash->{time2str } = \&time2str;
+   $stash->{ucfirst  } = sub { ucfirst $_[ 0 ] };
+   $stash->{uri_for  } = sub { $req->uri_for( @_ ), };
+   return;
+}
+
 1;
 
 __END__
@@ -227,6 +242,8 @@ Defines no attributes
 =head2 C<mtime>
 
 =head2 C<set_element_focus>
+
+=head2 C<stash_functions>
 
 =head1 Diagnostics
 

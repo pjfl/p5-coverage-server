@@ -5,6 +5,7 @@ use namespace::autoclean;
 use Class::Usul::Constants qw( TRUE );
 use Class::Usul::Functions qw( is_hashref );
 use Class::Usul::Types     qw( Plinth );
+use Coverage::Server::Util qw( stash_functions );
 use Encode                 qw( encode );
 use HTML::FormWidgets;
 use Moo;
@@ -17,6 +18,15 @@ has 'application' => is => 'ro', isa => Plinth,
    required       => TRUE,  weak_ref => TRUE;
 
 has '+moniker'    => default => 'html';
+
+# Construction
+around 'render_template' => sub {
+   my ($orig, $self, $req, $stash) = @_;
+
+   stash_functions $self, $req, $stash;
+
+   return $orig->( $self, $req, $stash );
+};
 
 # Private functions
 my $_header = sub {
