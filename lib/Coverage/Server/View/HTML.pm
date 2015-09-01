@@ -9,8 +9,8 @@ use Encode                 qw( encode );
 use HTML::FormWidgets;
 use Moo;
 
-with q(Web::Components::Role);
-with q(Coverage::Server::Role::Templates);
+with 'Web::Components::Role';
+with 'Coverage::Server::Role::Templates';
 
 # Public attributes
 has 'application' => is => 'ro', isa => Plinth,

@@ -9,7 +9,7 @@ use HTTP::Status           qw( HTTP_BAD_REQUEST HTTP_NOT_FOUND HTTP_OK );
 use Scalar::Util           qw( blessed );
 use Moo;
 
-with q(Web::Components::Role);
+with 'Web::Components::Role';
 
 # Public attributes
 has 'application' => is => 'ro', isa => Plinth,

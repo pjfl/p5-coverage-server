@@ -1,4 +1,4 @@
-package Coverage::Server::Functions;
+package Coverage::Server::Util;
 
 use 5.010001;
 use strictures;
@@ -190,32 +190,57 @@ __END__
 
 =head1 Name
 
-Coverage::Server::Functions - One-line description of the modules purpose
+Coverage::Server::Util - Functions used in this application
 
 =head1 Synopsis
 
-   use Coverage::Server::Functions;
-   # Brief but working code examples
+   use Coverage::Server::Util qw( iterator );
+
+   my $iter = iterator $tree;
 
 =head1 Description
 
+Functions used in this application
+
 =head1 Configuration and Environment
 
-Defines the following attributes;
-
-=over 3
-
-=back
+Defines no attributes
 
 =head1 Subroutines/Methods
 
+=head2 C<build_navigation_list>
+
+=head2 C<build_tree>
+
+=head2 C<clone>
+
+=head2 C<env_var>
+
+=head2 C<enhance>
+
+=head2 C<iterator>
+
+=head2 C<make_id_from>
+
+=head2 C<make_name_from>
+
+=head2 C<mtime>
+
+=head2 C<set_element_focus>
+
 =head1 Diagnostics
+
+None
 
 =head1 Dependencies
 
 =over 3
 
+=item L<Exporter::Tiny>
+
 =item L<Class::Usul>
+
+=item L<Unexpected>
 
 =back
 

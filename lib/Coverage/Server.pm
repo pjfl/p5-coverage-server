@@ -2,12 +2,12 @@ package Coverage::Server;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.3.%d', q$Rev: 1 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.3.%d', q$Rev: 2 $ =~ /\d+/gmx );
 
 use Class::Usul;
-use Class::Usul::Constants      qw( NUL TRUE );
-use Class::Usul::Types          qw( HashRef Plinth );
-use Coverage::Server::Functions qw( enhance env_var );
+use Class::Usul::Constants  qw( NUL TRUE );
+use Class::Usul::Types      qw( HashRef Plinth );
+use Coverage::Server::Util  qw( enhance env_var );
 use Plack::Builder;
 use Web::Simple;
 

@@ -2,13 +2,13 @@ package Coverage::Server::Model::Report;
 
 use namespace::autoclean;
 
-use Coverage::Server::Functions qw( build_navigation_list
-                                    build_tree clone iterator );
-use Class::Usul::Constants      qw( FALSE NUL TRUE );
-use Class::Usul::Functions      qw( symlink throw );
+use Class::Usul::Constants qw( FALSE NUL TRUE );
+use Class::Usul::Functions qw( symlink throw );
 use Class::Usul::Response::Table;
-use HTTP::Status                qw( HTTP_OK );
-use JSON::MaybeXS               qw( decode_json encode_json );
+use Coverage::Server::Util qw( build_navigation_list
+                               build_tree clone iterator );
+use HTTP::Status           qw( HTTP_OK );
+use JSON::MaybeXS          qw( decode_json encode_json );
 use SVG;
 use Moo;
 
