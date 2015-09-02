@@ -11,22 +11,13 @@ use HTML::FormWidgets;
 use Moo;
 
 with 'Web::Components::Role';
-with 'Coverage::Server::Role::Templates';
+with 'Web::Components::Role::TT';
 
 # Public attributes
 has 'application' => is => 'ro', isa => Plinth,
    required       => TRUE,  weak_ref => TRUE;
 
 has '+moniker'    => default => 'html';
-
-# Construction
-around 'render_template' => sub {
-   my ($orig, $self, $req, $stash) = @_;
-
-   stash_functions $self, $req, $stash;
-
-   return $orig->( $self, $req, $stash );
-};
 
 # Private functions
 my $_header = sub {
@@ -54,6 +45,10 @@ sub serialize {
    my $html = encode( $enc, $self->render_template( $req, $stash ) );
 
    return [ $stash->{code}, $_header->( $stash->{http_headers} ), [ $html ] ];
+}
+
+sub stash_template_functions {
+   my ($self, $req, $stash) = @_; stash_functions $self, $req, $stash; return;
 }
 
 1;

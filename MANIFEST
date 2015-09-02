@@ -6,11 +6,10 @@ bin/coverage-server
 lib/Coverage/Server.pm
 lib/Coverage/Server/Config.pm
 lib/Coverage/Server/Controller/Root.pm
-lib/Coverage/Server/Functions.pm
 lib/Coverage/Server/Model.pm
 lib/Coverage/Server/Model/Report.pm
 lib/Coverage/Server/Role/PageConfiguration.pm
-lib/Coverage/Server/Role/Templates.pm
+lib/Coverage/Server/Util.pm
 lib/Coverage/Server/View/HTML.pm
 lib/Coverage/Server/coverage-server.json
 lib/strictures/defanged.pm

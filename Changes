@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+          - Moved Role::Template to Web::Components::Role::TT
           - Moving Role::Template to own distribution
           - Idiomatic rename of Functions to Util
 

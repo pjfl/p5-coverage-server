@@ -26,11 +26,11 @@ my $prereqs  = {
     'Moo' => '2.000001',
     'Plack' => '1.0036',
     'SVG' => '2.64',
-    'Template' => '2.26',
     'Try::Tiny' => '0.22',
     'Type::Tiny' => '1.000005',
     'Unexpected' => 'v0.39.0',
     'Web::Components' => 'v0.4.0',
+    'Web::Components::Role::TT' => 'v0.2.0',
     'Web::Simple' => '0.030',
     'local::lib' => '2.000015',
     'namespace::autoclean' => '0.26',
@@ -54,7 +54,8 @@ my $whimper  = sub { print {*STDOUT} $_[ 0 ]."\n"; exit 0 };
 my $stop     = sub {
    $testing->() or $whimper->( $_[ 0 ] );
    $prereqs->{build_requires} = { %{ $prereqs->{configure_requires} } };
-   $prereqs->{build_requires}->{ 'Test::Requires' } = 0.06;
+   $prereqs->{test_requires } = { %{ $prereqs->{configure_requires} } };
+   $prereqs->{test_requires }->{ 'Test::Requires' } = 0.06;
    delete $prereqs->{requires};
 };
 
