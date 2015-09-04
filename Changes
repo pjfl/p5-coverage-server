@@ -1,5 +1,7 @@
 Revision history for Coverage::Server
 
+          - Use decorator in HTML view
+
 0.4.1     2015-09-02 16:07:15
           - Moved Role::Template to Web::Components::Role::TT
           - Moving Role::Template to own distribution

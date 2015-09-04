@@ -24,32 +24,24 @@ my $_header = sub {
    return [ 'Content-Type' => 'text/html', @{ $_[ 0 ] // [] } ];
 };
 
-# Private methods
-my $_render_page = sub {
-   my ($self, $req, $page) = @_;
-
-   (exists $page->{content} and is_hashref $page->{content}
-       and $page->{content}->{widget}) or return;
-
-   $page->{content} = HTML::FormWidgets->new( $page->{content} )->render;
-
-   return;
-};
-
 # Public methods
 sub serialize {
-   my ($self, $req, $stash) = @_; my $enc = $self->encoding;
+   my ($self, $req, $stash) = @_; stash_functions $self, $req, $stash;
 
-   $self->$_render_page( $req, $stash->{page} );
-
-   my $html = encode( $enc, $self->render_template( $req, $stash ) );
+   my $html = encode( $self->encoding, $self->render_template( $stash ) );
 
    return [ $stash->{code}, $_header->( $stash->{http_headers} ), [ $html ] ];
 }
 
-sub stash_template_functions {
-   my ($self, $req, $stash) = @_; stash_functions $self, $req, $stash; return;
-}
+around 'serialize' => sub {
+   my ($orig, $self, $req, $stash) = @_; my $page = $stash->{page} //= {};
+
+   exists $page->{content} and is_hashref $page->{content}
+      and $page->{content}->{widget}
+      and $page->{content} = HTML::FormWidgets->new( $page->{content} )->render;
+
+   return $orig->( $self, $req, $stash );
+};
 
 1;
 
