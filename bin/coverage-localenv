@@ -52,7 +52,6 @@ exists $ENV{ $active_key } and defined $ENV{ $active_key }
 
 if ($active) {
    not -d $local_lib and warn "Path ${local_lib} not found from ${our_path}\n";
-
    # So we can find local::lib when fully self contained
    lib->import( catdir( $local_lib, 'lib', 'perl5' ) );
 
@@ -74,11 +73,13 @@ __END__
 
 =pod
 
-=head1 NAME
+=encoding utf-8
+
+=head1 Name
 
 coverage-localenv - Set environment to use a local library of Perl modules
 
-=head1 SYNOPSIS
+=head1 Synopsis
 
    use English qw( -no_match_vars );
    use FindBin qw( $Bin );
@@ -91,48 +92,48 @@ coverage-localenv - Set environment to use a local library of Perl modules
       -f $path and (do $path or die $EVAL_ERROR || "Path ${path} not done\n");
    }
 
-=head1 DESCRIPTION
+=head1 Description
 
 Set environment to use a local library of Perl modules
 
-=head1 REQUIRED ARGUMENTS
+=head1 Required arguments
 
 None
 
-=head1 OPTIONS
+=head1 Options
 
 None
 
-=head1 DIAGNOSTICS
+=head1 Diagnostics
 
 Prints errors to stderr
 
-=head1 EXIT STATUS
+=head1 Exit status
 
 None
 
-=head1 CONFIGURATION
+=head1 Configuration
 
 Edit the C<$LOCAL_LIB> variable definition if a directory other than
 F<local> is required
 
-=head1 DEPENDENCIES
+=head1 Dependencies
 
 None
 
-=head1 INCOMPATIBILITIES
+=head1 Incompatibilities
 
 None
 
-=head1 BUGS AND LIMITATIONS
+=head1 Bugs and limitations
 
 Send reports to address below
 
-=head1 AUTHOR
+=head1 Author
 
 Peter Flanigan, C<< <pjfl@cpan.org> >>
 
-=head1 LICENSE AND COPYRIGHT
+=head1 License and copyright
 
 Copyright (c) 2015 Peter Flanigan
 

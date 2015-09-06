@@ -4,5 +4,6 @@
       [ "less", "less.js/1.7.4/less.min.js" ],
       [ "moocore", "mootools/1.4.5/mootools-core-full-nocompat.min.js" ],
       [ "moomore", "mootools-more/1.4.0.1/mootools-more-yui-compressed.min.js" ]
-   ]
+   ],
+   "prefix": "coverage"
 }

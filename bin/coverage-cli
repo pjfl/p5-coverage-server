@@ -13,10 +13,12 @@ BEGIN {
 
 use strictures::defanged; # Make strictures the same as use strict warnings
 
-use Coverage::Server;
+use Class::Usul::Programs;
 
-Coverage::Server->new
-   ( config => { appclass => 'Coverage::Server' } )->run_if_script;
+exit Class::Usul::Programs->new_with_options
+   ( appclass     => 'Coverage::Server',
+     config_class => 'Coverage::Server::Config',
+     noask        => 1 )->run;
 
 __END__
 
@@ -26,40 +28,47 @@ __END__
 
 =head1 Name
 
-coverage-server - Generates and serves badges from test coverage summaries
+coverage-cli - Command line interface to the Coverage::Server application
 
 =head1 Synopsis
 
 =over 3
 
-=item B<plackup> B<--access-log> logfile bin/coverage-server
+=item B<coverage-cli> B<dump-config-attr>
 
-Starts the development server listening on port 5000
+Dumps a listing of all the configuration attributes and their values
+
+=item B<coverage-cli> B<-H> | B<-h> I<[method]> | B<-?>
+
+Display man page / method help  / usage strings
+
+=item B<coverage-cli> B<list-methods>
+
+Lists the methods available in this program
 
 =back
 
 =head1 Description
 
-Generates and serves badges from test coverage summaries
+Command line interface to the Coverage::Server application
 
 =head1 Required arguments
 
-The C<plackup> command requires a C<PSGI> application
+None
 
 =head1 Options
 
 =over 3
 
-=item B<--access-log>
+=item B<-D>
 
-Specify the path to the access log file
+Turn debugging on
 
 =back
 
 =head1 Diagnostics
 
-Exporting C<COVERAGE_SERVER_DEBUG> equal to true turns on logging at the debug
-level
+Prints errors to stderr
 
 =head1 Exit status
 
