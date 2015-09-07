@@ -246,19 +246,24 @@ sub BUILD {
 sub add_report {
    my ($self, $req) = @_;
 
+   my $conf    = $self->config;
    my $dist    = $req->uri_params->( 0 );
    my $body_p  = $req->body_params;
    my $info    = $body_p->( 'info',    { raw => TRUE } );
    my $summary = $body_p->( 'summary', { raw => TRUE } );
    my ($major, $minor) = split m{ \. }mx, $info->{version};
-   my $s_file  = $self->config->datadir->catfile( $dist, "${major}.${minor}" );
+   my $s_file  = $conf->datadir->catfile( $dist, "${major}.${minor}" );
    my $report  = { info => $info, summary => $summary };
-   my $commit  = $info->{commit};
 
-   # TODO: Validate commit against github before writing file
+   if ($info->{coverage_token} ne $conf->coverage_token) {
+      my $content = encode_json { message => 'Coverage authentication failed' };
+
+      return [ HTTP_OK, [ 'Content-Type' => 'application/json' ], [ $content ]];
+   }
+
    $s_file->assert_filepath->print( encode_json $report );
 
-   my $latest  = $self->config->datadir->catfile( $dist, 'latest' );
+   my $latest  = $conf->datadir->catfile( $dist, 'latest' );
 
    $latest->exists and $latest->unlink; symlink $s_file, $latest;
    $self->$_invalidate_caches;

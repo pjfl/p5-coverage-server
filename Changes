@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+          - Added coverage_token authentication
           - Touched up documentation
           - Added command line interface to dump-config-attr
           - Use decorator in HTML view

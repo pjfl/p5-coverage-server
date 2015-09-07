@@ -58,6 +58,9 @@ has 'components'      => is => 'ro',   isa => HashRef, builder => sub { {} };
 
 has 'compress_css'    => is => 'ro',   isa => Bool, default => TRUE;
 
+has 'coverage_token'  => is => 'lazy', isa => $SECRET, coerce => TRUE,
+   builder            => sub { '~/.ssh/coverage_token' };
+
 has 'css'             => is => 'ro',   isa => NonEmptySimpleStr,
    default            => 'css/';
 
@@ -180,10 +183,10 @@ has '_links'          => is => 'ro',   isa => HashRef,
 package # Hide from indexer
    Coverage::Server::_Secret;
 
-use Class::Usul::Constants qw( TRUE );
-use Class::Usul::Functions qw( io );
-use Class::Usul::Types     qw( NonEmptySimpleStr );
-use Sys::Hostname          qw( hostname );
+use File::DataClass::Constants qw( TRUE );
+use File::DataClass::IO;
+use File::DataClass::Types     qw( NonEmptySimpleStr );
+use Sys::Hostname              qw( hostname );
 use Moo;
 
 use namespace::clean -except => [ 'hostname', 'meta' ];
@@ -192,12 +195,12 @@ use overload '""' => sub { $_[ 0 ]->evaluate }, fallback => 1;
 has 'value' => is => 'ro', isa => NonEmptySimpleStr, required => TRUE;
 
 sub evaluate {
-   my $v = $_[ 0 ]->value;
+   my $v = $_[ 0 ]->value; my $file;
 
-   return -x $v             ? qx( $v )
-        : -r $v             ? io( $v )->all
-        : exists $ENV{ $v } ? $ENV{ $v }
-                            : eval $v;
+   return -x $v                                ? qx( $v )
+        : ($file = io( $v ) and $file->exists) ? $file->all
+        : exists $ENV{ $v }                    ? $ENV{ $v }
+                                               : eval $v;
 }
 
 1;
