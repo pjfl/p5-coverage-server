@@ -4,13 +4,11 @@ use 5.010001;
 use strictures;
 use parent 'Exporter::Tiny';
 
-use Class::Usul::Constants qw( EXCEPTION_CLASS NUL );
+use Class::Usul::Constants qw( NUL );
 use Class::Usul::Functions qw( app_prefix env_prefix find_apphome first_char
-                               get_cfgfiles is_arrayref is_hashref is_member
-                               throw );
+                               get_cfgfiles is_arrayref is_hashref is_member );
 use Class::Usul::Time      qw( str2time time2str );
 use Scalar::Util           qw( weaken );
-use Unexpected::Functions  qw( Unspecified );
 
 our @EXPORT_OK = qw( build_navigation_list build_tree clone env_var enhance
                      iterator make_id_from make_name_from mtime
@@ -119,7 +117,7 @@ sub enhance ($) {
    my $conf = shift;
    my $attr = { config => { %{ $conf } }, }; $conf = $attr->{config};
 
-   $conf->{appclass    } or  throw Unspecified, [ 'application class' ];
+   $conf->{appclass    } //= 'Coverage::Server';
    $attr->{config_class} //= $conf->{appclass}.'::Config';
    $conf->{name        } //= app_prefix   $conf->{appclass};
    $conf->{home        } //= find_apphome $conf->{appclass}, $conf->{home};
@@ -184,14 +182,14 @@ sub set_element_focus ($$) {
 }
 
 sub stash_functions ($$$) {
-   my ($app, $req, $stash) = @_; weaken $req;
+   my ($app, $src, $dest) = @_; weaken $src;
 
-   $stash->{is_member} = \&is_member;
-   $stash->{loc      } = sub { $req->loc( @_ ) };
-   $stash->{str2time } = \&str2time;
-   $stash->{time2str } = \&time2str;
-   $stash->{ucfirst  } = sub { ucfirst $_[ 0 ] };
-   $stash->{uri_for  } = sub { $req->uri_for( @_ ), };
+   $dest->{is_member} = \&is_member;
+   $dest->{loc      } = sub { $src->loc( @_ ) };
+   $dest->{str2time } = \&str2time;
+   $dest->{time2str } = \&time2str;
+   $dest->{ucfirst  } = sub { ucfirst $_[ 0 ] };
+   $dest->{uri_for  } = sub { $src->uri_for( @_ ), };
    return;
 }
 

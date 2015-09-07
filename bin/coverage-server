@@ -15,8 +15,7 @@ use strictures::defanged; # Make strictures the same as use strict warnings
 
 use Coverage::Server;
 
-Coverage::Server->new
-   ( config => { appclass => 'Coverage::Server' } )->run_if_script;
+Coverage::Server->new->run_if_script;
 
 __END__
 

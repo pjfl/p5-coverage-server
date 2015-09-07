@@ -7,7 +7,7 @@ use Class::Usul::Functions qw( symlink throw );
 use Class::Usul::Response::Table;
 use Coverage::Server::Util qw( build_navigation_list
                                build_tree clone iterator );
-use HTTP::Status           qw( HTTP_OK );
+use HTTP::Status           qw( HTTP_OK HTTP_UNAUTHORIZED );
 use JSON::MaybeXS          qw( decode_json encode_json );
 use SVG;
 use Moo;
@@ -114,6 +114,10 @@ my $_invalidate_caches = sub {
    $file->touch( $mtime ); $self->log->debug( 'Caches invalidated' );
 
    return;
+};
+
+my $_json_header = sub {
+   return [ 'Content-Type' => 'application/json', @{ $_[ 0 ] // [] } ];
 };
 
 my $_report_tree = sub {
@@ -244,7 +248,7 @@ sub BUILD {
 
 # Public methods
 sub add_report {
-   my ($self, $req) = @_;
+   my ($self, $req) = @_; my $content;
 
    my $conf    = $self->config;
    my $dist    = $req->uri_params->( 0 );
@@ -252,25 +256,21 @@ sub add_report {
    my $info    = $body_p->( 'info',    { raw => TRUE } );
    my $summary = $body_p->( 'summary', { raw => TRUE } );
    my ($major, $minor) = split m{ \. }mx, $info->{version};
+   my $latest  = $conf->datadir->catfile( $dist, 'latest' );
    my $s_file  = $conf->datadir->catfile( $dist, "${major}.${minor}" );
+   my $token   = $info->{coverage_token} or throw 'No authentication token';
    my $report  = { info => $info, summary => $summary };
 
-   if ($info->{coverage_token} ne $conf->coverage_token) {
-      my $content = encode_json { message => 'Coverage authentication failed' };
-
-      return [ HTTP_OK, [ 'Content-Type' => 'application/json' ], [ $content ]];
-   }
+   $token ne $conf->coverage_token
+      and $content = encode_json { message => 'Coverage authentication failed' }
+      and return [ HTTP_UNAUTHORIZED, $_json_header->(), [ $content ] ];
 
    $s_file->assert_filepath->print( encode_json $report );
-
-   my $latest  = $conf->datadir->catfile( $dist, 'latest' );
-
    $latest->exists and $latest->unlink; symlink $s_file, $latest;
+   $content = encode_json { message => 'Posted coverage summary' };
    $self->$_invalidate_caches;
 
-   my $content = encode_json { message => 'Posted coverage summary' };
-
-   return [ HTTP_OK, [ 'Content-Type' => 'application/json' ], [ $content ] ];
+   return [ HTTP_OK, $_json_header->(), [ $content ] ];
 }
 
 sub get_badge {

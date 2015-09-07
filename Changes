@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+          - Shaved constructors
           - Added encryption for coverage_token store
           - Added coverage_token authentication
           - Touched up documentation
