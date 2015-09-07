@@ -210,7 +210,7 @@ my $_initialise_page = sub {
    my $table  = $_create_summary_table->( $report->{summary} );
 
    $page->{content} = { data => $table, type => 'table', widget => TRUE };
-   $page->{parent } = $report->{info}->{dist};
+   $page->{parent } = $report->{info}->{dist_name};
    $page->{mtime  } = $tree->{mtime};
 
    $self->log->debug( 'Page loaded '.$page->{url} );

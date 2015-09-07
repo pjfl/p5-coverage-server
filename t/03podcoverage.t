@@ -17,9 +17,12 @@ eval "use Test::Pod::Coverage 1.04";
 
 $EVAL_ERROR and plan skip_all => 'Test::Pod::Coverage 1.04 required';
 
-pod_coverage_ok( 'Coverage::Server' );
-pod_coverage_ok( 'Coverage::Server::Config'  );
-pod_coverage_ok( 'Coverage::Server::Util'  );
+my $opts = { also_private => [ qr{ \A (?: BUILDARGS | BUILD ) \z }mx ] };
+
+pod_coverage_ok( 'Coverage::Server',         $opts );
+pod_coverage_ok( 'Coverage::Server::CLI',    $opts );
+pod_coverage_ok( 'Coverage::Server::Config', $opts );
+pod_coverage_ok( 'Coverage::Server::Util',   $opts );
 
 done_testing;
 

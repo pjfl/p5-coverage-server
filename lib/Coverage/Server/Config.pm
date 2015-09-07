@@ -3,17 +3,14 @@ package Coverage::Server::Config;
 use namespace::autoclean;
 
 use Class::Usul::Constants qw( NUL TRUE );
-use File::DataClass::Types qw( ArrayRef Bool HashRef NonEmptySimpleStr
+use File::DataClass::Types qw( ArrayRef Bool CodeRef HashRef NonEmptySimpleStr
                                NonZeroPositiveInt Object Path
                                PositiveInt SimpleStr Str Undef );
+use Sys::Hostname          qw( hostname );
 use Type::Utils            qw( as coerce from subtype via );
 use Moo;
 
 extends 'Class::Usul::Config::Programs';
-
-my $SECRET = subtype as Object;
-
-coerce $SECRET, from Str, via { Coverage::Server::_Secret->new( value => $_ ) };
 
 # Private functions
 my $_to_array_of_hash = sub {
@@ -58,8 +55,10 @@ has 'components'      => is => 'ro',   isa => HashRef, builder => sub { {} };
 
 has 'compress_css'    => is => 'ro',   isa => Bool, default => TRUE;
 
-has 'coverage_token'  => is => 'lazy', isa => $SECRET, coerce => TRUE,
-   builder            => sub { '~/.ssh/coverage_token' };
+has 'coverage_token'  => is => 'lazy', isa => Object, builder => sub {
+   Coverage::Server::_Secret->new
+      ( config => $_[ 0 ], value => $_[ 0 ]->_coverage_token, ) },
+   init_arg           => undef;
 
 has 'css'             => is => 'ro',   isa => NonEmptySimpleStr,
    default            => 'css/';
@@ -136,8 +135,10 @@ has 'request_roles'   => is => 'ro',   isa => ArrayRef[NonEmptySimpleStr],
 has 'scrubber'        => is => 'ro',   isa => Str,
    default            => '[^ +\-\./0-9@A-Z\\_a-z~]';
 
-has 'secret'          => is => 'lazy', isa => $SECRET, coerce => TRUE,
-   builder            => sub { 'hostname' };
+has 'secret'          => is => 'lazy', isa => Object, builder => sub {
+   Coverage::Server::_Secret->new
+      ( config => $_[ 0 ], value => $_[ 0 ]->_secret, ) },
+   init_arg           => undef;
 
 has 'serve_as_static' => is => 'ro',   isa => NonEmptySimpleStr,
    default            => 'css | favicon.ico | img | js | less';
@@ -177,30 +178,48 @@ has 'user_home'       => is => 'lazy', isa => Path, coerce => TRUE,
    builder            => $_build_user_home;
 
 # Private attributes
+has '_coverage_token' => is => 'ro',   isa => CodeRef|NonEmptySimpleStr,
+   builder            => sub { sub { hostname } }, init_arg => 'coverage_token';
+
 has '_links'          => is => 'ro',   isa => HashRef,
    builder            => sub { {} }, init_arg => 'links';
+
+has '_secret'         => is => 'ro',   isa => CodeRef|NonEmptySimpleStr,
+   builder            => sub { sub { hostname } }, init_arg => 'secret';
 
 package # Hide from indexer
    Coverage::Server::_Secret;
 
-use File::DataClass::Constants qw( TRUE );
-use File::DataClass::IO;
-use File::DataClass::Types     qw( NonEmptySimpleStr );
-use Sys::Hostname              qw( hostname );
+use Class::Usul::Constants   qw( EXCEPTION_CLASS TRUE );
+use Class::Usul::Crypt::Util qw( decrypt_from_config is_encrypted );
+use Class::Usul::Functions   qw( is_coderef );
+use Class::Usul::Types       qw( CodeRef HashRef NonEmptySimpleStr Object );
+use File::DataClass::IO      qw( io );
+use Unexpected::Functions    qw( throw );
 use Moo;
 
-use namespace::clean -except => [ 'hostname', 'meta' ];
-use overload '""' => sub { $_[ 0 ]->evaluate }, fallback => 1;
+use namespace::clean -except => [ 'meta' ];
+use overload '""' => sub { $_[ 0 ]->evaluate }, fallback => TRUE;
 
-has 'value' => is => 'ro', isa => NonEmptySimpleStr, required => TRUE;
+has 'config' => is => 'ro', isa => HashRef|Object, required => TRUE,
+   weak_ref  => TRUE;
+
+has 'value'  => is => 'ro', isa => CodeRef|NonEmptySimpleStr, required => TRUE;
 
 sub evaluate {
-   my $v = $_[ 0 ]->value; my $file;
+   my $self = shift; my $conf = $self->config; my $v = $self->value;
 
-   return -x $v                                ? qx( $v )
-        : ($file = io( $v ) and $file->exists) ? $file->all
-        : exists $ENV{ $v }                    ? $ENV{ $v }
-                                               : eval $v;
+   is_coderef $v and ($v = $v->() or throw 'Secret coderef is not true');
+
+   my $file = io $v;
+   my $raw  = (exists $ENV{ $v } and defined $ENV{ $v }  ) ? $ENV{ $v }
+            : ($file->exists     and $file->is_executable) ? qx( $v )
+            : $file->exists                                ? $file->all
+                                                           : $v;
+
+   (defined $raw and length $raw) or throw 'Secret not defined or no length';
+
+   return (is_encrypted $raw) ? decrypt_from_config( $conf, $raw ) : $raw;
 }
 
 1;
@@ -295,6 +314,11 @@ by component classname with the leading application class removed. e.g.
 =item C<compress_css>
 
 Boolean default to true. Should the C<make_css> method compress it's output
+
+=item C<coverage_token>
+
+A C<Coverage::Server::_Secret> object reference. Stringifies to the token used
+to authenticate new report posts
 
 =item C<css>
 
@@ -432,7 +456,8 @@ pathnames or query terms. Defaults to C<[;\$\`&\r\n]>
 
 =item C<secret>
 
-Used to encrypt the session cookie
+A C<Coverage::Server::_Secret> object reference. Stringifies to the key used to
+encrypt the session cookie
 
 =item C<serve_as_static>
 

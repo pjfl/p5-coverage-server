@@ -40,7 +40,10 @@ done_testing();
 __DATA__
 peter
 flanigan
+attr
+cli
 Coverage::Server
 localenv
 merchantability
+plackup
 sysv

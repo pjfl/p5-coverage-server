@@ -13,12 +13,9 @@ BEGIN {
 
 use strictures::defanged; # Make strictures the same as use strict warnings
 
-use Class::Usul::Programs;
+use Coverage::Server::CLI;
 
-exit Class::Usul::Programs->new_with_options
-   ( appclass     => 'Coverage::Server',
-     config_class => 'Coverage::Server::Config',
-     noask        => 1 )->run;
+exit Coverage::Server::CLI->new_with_options( noask => 1 )->run;
 
 __END__
 

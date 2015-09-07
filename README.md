@@ -99,8 +99,8 @@ Load the ["Plack"](#plack) stack with middleware
 
 # Diagnostics
 
-Setting `COVERAGE_DEBUG` to true in the environment and exporting it causes
-the application to log at the debug level
+Setting `COVERAGE_SERVER_DEBUG` to true in the environment and exporting it
+causes the application to log at the debug level
 
 # Dependencies
 
