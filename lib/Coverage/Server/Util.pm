@@ -10,7 +10,7 @@ use Class::Usul::Functions qw( app_prefix env_prefix find_apphome first_char
 use Class::Usul::Time      qw( str2time time2str );
 use Scalar::Util           qw( weaken );
 
-our @EXPORT_OK = qw( build_navigation_list build_tree clone env_var enhance
+our @EXPORT_OK = qw( build_navigation_list build_tree clone enhance
                      iterator make_id_from make_name_from mtime
                      set_element_focus stash_functions );
 
@@ -128,12 +128,6 @@ sub enhance ($) {
    return $attr;
 }
 
-sub env_var ($$;$) {
-   my ($class, $var, $v) = @_; my $k = (env_prefix $class)."_${var}";
-
-   return defined $v ? $ENV{ $k } = $v : $ENV{ $k };
-}
-
 sub iterator ($) {
    my $tree = shift; my @folders = ( $_make_tuple->( $tree ) );
 
@@ -226,8 +220,6 @@ Defines no attributes
 =head2 C<build_tree>
 
 =head2 C<clone>
-
-=head2 C<env_var>
 
 =head2 C<enhance>
 

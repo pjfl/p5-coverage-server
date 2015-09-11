@@ -1,5 +1,7 @@
 Revision history for Coverage::Server
 
+          - Made env_var a class method
+
 0.5.1     2015-09-09 15:02:23
           - Shaved constructors
           - Added encryption for coverage_token store

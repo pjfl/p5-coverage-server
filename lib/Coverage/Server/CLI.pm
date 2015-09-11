@@ -4,7 +4,8 @@ use namespace::autoclean;
 
 use Class::Usul::Constants   qw( CONFIG_EXTN FALSE NUL OK TRUE );
 use Class::Usul::Crypt::Util qw( encrypt_for_config );
-use Class::Usul::Functions   qw( arg_list class2appdir throw );
+use Class::Usul::Functions   qw( arg_list class2appdir ensure_class_loaded
+                                 throw );
 use Moo;
 
 extends q(Class::Usul::Programs);
@@ -20,14 +21,16 @@ around 'BUILDARGS' => sub {
 };
 
 sub encrypt : method {
-   my $self  = shift;
-   my $file  = $self->file;
-   my $conf  = $self->config;
-   my $appd  = class2appdir $conf->appclass;
-   my $path  = $conf->home->catfile( "${appd}_local".CONFIG_EXTN );
-   my $data  = $path->exists ? $file->data_load( paths => [ $path ] ) : {};
-   my $value = $self->get_line( '+Token', NUL, TRUE, 25, FALSE, TRUE );
-   my $again = $self->get_line( '+Again', NUL, TRUE, 25, FALSE, TRUE );
+   my $self   = shift;
+   my $file   = $self->file;
+   my $conf   = $self->config;
+   my $class  = $conf->appclass; ensure_class_loaded $class;
+   my $appd   = class2appdir $class;
+   my $suffix = $class->env_var( 'CONFIG_LOCAL_SUFFIX' ) // 'local';
+   my $path   = $conf->home->catfile( "${appd}_${suffix}".CONFIG_EXTN );
+   my $data   = $path->exists ? $file->data_load( paths => [ $path ] ) : {};
+   my $value  = $self->get_line( '+Token', NUL, TRUE, 25, FALSE, TRUE );
+   my $again  = $self->get_line( '+Again', NUL, TRUE, 25, FALSE, TRUE );
 
    $value ne $again and throw 'Tokens do not match';
    $data->{coverage_token} = encrypt_for_config $conf, $value;

@@ -217,8 +217,6 @@ my $_initialise_page = sub {
    $page->{parent } = $report->{info}->{dist_name};
    $page->{mtime  } = $tree->{mtime};
 
-   $self->log->debug( 'Page loaded '.$page->{url} );
-
    return $_page_cache->{ $page->{url} } = $page;
 };
 

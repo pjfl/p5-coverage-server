@@ -2,12 +2,13 @@ package Coverage::Server;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.5.%d', q$Rev: 1 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.5.%d', q$Rev: 2 $ =~ /\d+/gmx );
 
 use Class::Usul;
 use Class::Usul::Constants  qw( NUL TRUE );
+use Class::Usul::Functions  qw( ensure_class_loaded env_prefix );
 use Class::Usul::Types      qw( HashRef Plinth );
-use Coverage::Server::Util  qw( enhance env_var );
+use Coverage::Server::Util  qw( enhance );
 use Plack::Builder;
 use Web::Simple;
 
@@ -50,14 +51,21 @@ around 'to_psgi_app' => sub {
 };
 
 sub BUILD {
-   my $self   = shift;
-   my $server = ucfirst( $ENV{PLACK_ENV} // NUL );
-   my $port   = env_var $self->config->appclass, 'PORT';
-   my $info   = 'v'.$VERSION; $port and $info .= " on port ${port}";
+   my $self     = shift;
+   my $server   = ucfirst( $ENV{PLACK_ENV} // NUL );
+   my $appclass = $self->config->appclass; ensure_class_loaded $appclass;
+   my $port     = $appclass->env_var( 'PORT' );
+   my $info     = 'v'.$appclass->VERSION; $port and $info .= " on port ${port}";
 
    $self->log->info( "${server} Server started ${info}" );
 
    return;
+}
+
+sub env_var {
+   my ($class, $var, $v) = @_; my $k = (env_prefix $class)."_${var}";
+
+   return defined $v ? $ENV{ $k } = $v : $ENV{ $k };
 }
 
 1;
@@ -166,6 +174,10 @@ The configuration file defaults to F<lib/Coverage/Server/coverage-server.json>
 =head2 C<BUILD>
 
 Log some diagnostic information when the application starts
+
+=head2 C<env_var>
+
+Accessor / mutator for this applications environment variables
 
 =head2 C<to_psgi_app>
 
