@@ -2,14 +2,16 @@ package t::boilerplate;
 
 use strict;
 use warnings;
-use File::Spec::Functions qw( catdir updir );
+use File::Spec::Functions qw( catdir catfile updir );
 use FindBin               qw( $Bin );
 use lib               catdir( $Bin, updir, 'lib' ), catdir( $Bin, 'lib' );
 
-use Test::More;
-use Test::Requires { version => 0.88 };
 use Module::Build;
 use Sys::Hostname;
+
+sub plan (;@) {
+   $_[ 0 ] eq 'skip_all' and print '1..0 # SKIP '.$_[ 1 ]."\n" and exit 0;
+}
 
 my ($builder, $host, $notes, $perl_ver);
 
@@ -19,12 +21,23 @@ BEGIN {
    $notes    = $builder ? $builder->notes : {};
    $perl_ver = $notes->{min_perl_version} || 5.008;
 
+   eval { require Test::Requires }; $@ and plan skip_all => 'No Test::Requires';
+
+   $Bin =~ m{ : .+ : }mx and plan skip_all => 'Two colons in $Bin path';
+
    if ($notes->{testing}) {
-      $Bin =~ m{ : .+ : }mx and plan skip_all => 'Two colons in $Bin path';
+      my $dumped = catfile( 't', 'exceptions.dd' );
+      my $except = {}; -f $dumped and $except = do $dumped;
+
+      exists $except->{ $host } and plan skip_all =>
+         'Broken smoker '.$except->{ $host };
    }
 }
 
 use Test::Requires "${perl_ver}";
+use Test::Requires { version => 0.88 };
+
+use version; our $VERSION = qv( '0.2' );
 
 sub import {
    strict->import;
