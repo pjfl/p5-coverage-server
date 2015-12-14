@@ -90,6 +90,10 @@ has 'css'             => is => 'ro',   isa => NonEmptySimpleStr,
 has 'data_mtime'      => is => 'lazy', isa => Path, coerce => TRUE,
    builder            => sub { $_[ 0 ]->datadir->catfile( '.mtime' ) };
 
+has 'default_route'   => is => 'lazy', isa => NonEmptySimpleStr,
+   builder            => sub {
+      (my $mp = $_[ 0 ]->mount_point) =~ s{ \A / \z }{}mx; "${mp}/index" };
+
 has 'default_view'    => is => 'ro',   isa => SimpleStr, default => 'html';
 
 has 'deflate_types'   => is => 'ro',   isa => ArrayRef[NonEmptySimpleStr],
@@ -305,6 +309,12 @@ This is read from F<var/etc/coverage-server.json> and decrypted before use
 
 A non empty simple string that defaults to F<css/>. Relative URI path
 that locates the static CSS files
+
+=item C<default_route>
+
+A non empty simple string that default to F</coverage/index> assuming that the
+L</mount_point> is F</coverage>. What to redirect to for all paths outside the
+mount point
 
 =item C<default_view>
 
