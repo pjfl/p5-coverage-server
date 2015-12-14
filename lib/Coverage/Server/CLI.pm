@@ -16,24 +16,22 @@ around 'BUILDARGS' => sub {
    my $conf = $args->{config} //= {}; $conf->{appclass} //= 'Coverage::Server';
 
    $args->{config_class} //= $conf->{appclass}.'::Config';
+   $conf->{name        } //= class2appdir $conf->{appclass};
 
    return $orig->( $self, $args );
 };
 
 sub encrypt : method {
-   my $self   = shift;
-   my $file   = $self->file;
-   my $conf   = $self->config;
-   my $class  = $conf->appclass; ensure_class_loaded $class;
-   my $appd   = class2appdir $class;
-   my $suffix = $class->env_var( 'CONFIG_LOCAL_SUFFIX' ) // 'local';
-   my $path   = $conf->home->catfile( "${appd}_${suffix}".CONFIG_EXTN );
-   my $data   = $path->exists ? $file->data_load( paths => [ $path ] ) : {};
-   my $value  = $self->get_line( '+Token', NUL, TRUE, 25, FALSE, TRUE );
-   my $again  = $self->get_line( '+Again', NUL, TRUE, 25, FALSE, TRUE );
+   my $self  = shift;
+   my $file  = $self->file;
+   my $conf  = $self->config;
+   my $path  = $conf->ctlfile;
+   my $data  = $path->exists ? $file->data_load( paths => [ $path ] ) : {};
+   my $value = $self->get_line( '+Token', NUL, TRUE, 25, FALSE, TRUE );
+   my $again = $self->get_line( '+Again', NUL, TRUE, 25, FALSE, TRUE );
 
    $value ne $again and throw 'Tokens do not match';
-   $data->{coverage_token} = encrypt_for_config $conf, $value;
+   $data->{token} = encrypt_for_config $conf, $value;
    $file->data_dump( path => $path, data => $data );
    return OK;
 }
@@ -69,9 +67,8 @@ configuration class to L<Coverage::Server::Config>
 
 =head2 C<encrypt> - Encrypts and stores the authentication token
 
-Prompts for the authentication token, encrypts it and stores it in the local
-configuration file. See L<find_apphome|Class::Usul::Functions/find_apphome> and
-L<get_cfgfiles|Class::Usul::Functions/get_cfgfiles>
+Prompts for the authentication token, encrypts it and stores it in the
+control file, F<var/etc/coverage-server.json>
 
 =head1 Diagnostics
 

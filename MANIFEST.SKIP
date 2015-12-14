@@ -62,7 +62,7 @@ Thumbs.db
 
 # Avoid archives of this distribution
 \bCoverage-Server-v?[\d\.\_]+
-lib/Coverage/Server/coverage-server_local.json
 var/data
+var/etc/coverage-server.json
 var/logs
 var/tmp

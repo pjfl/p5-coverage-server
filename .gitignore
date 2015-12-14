@@ -19,9 +19,9 @@ nytprof.out
 pm_to_blib
 README
 README.pod
-lib/Coverage/Server/coverage-server_local.json
 t/ipc_srlock*
 var/data
+var/etc/coverage-server.json
 var/logs
 var/tmp
 *.tar.gz

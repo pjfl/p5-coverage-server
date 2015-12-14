@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+          - Refactored Config secret and coverage_token
           - Toolchain update
           - Made env_var a class method
 

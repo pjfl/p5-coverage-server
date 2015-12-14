@@ -2,11 +2,11 @@ package Coverage::Server;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.5.%d', q$Rev: 3 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.5.%d', q$Rev: 4 $ =~ /\d+/gmx );
 
 use Class::Usul;
 use Class::Usul::Constants  qw( NUL TRUE );
-use Class::Usul::Functions  qw( ensure_class_loaded env_prefix );
+use Class::Usul::Functions  qw( env_prefix );
 use Class::Usul::Types      qw( HashRef Plinth );
 use Coverage::Server::Util  qw( enhance );
 use Plack::Builder;
@@ -24,7 +24,7 @@ with 'Web::Components::Loader';
 
 # Construction
 around 'to_psgi_app' => sub {
-   my ($orig, $self, @args) = @_; my $app = $orig->( $self, @args );
+   my ($orig, $self, @args) = @_; my $psgi_app = $orig->( $self, @args );
 
    my $conf = $self->config; my $static = $conf->serve_as_static;
 
@@ -41,21 +41,20 @@ around 'to_psgi_app' => sub {
             expires     => 7_776_000,
             httponly    => TRUE,
             path        => $conf->mount_point,
-            secret      => $conf->secret.NUL,
+            secret      => $conf->secret,
             session_key => $conf->prefix.'_session';
          enable "LogDispatch", logger => $self->log;
          enable_if { $self->debug } 'Debug';
-         $app;
+         $psgi_app;
       };
    };
 };
 
 sub BUILD {
-   my $self     = shift;
-   my $server   = ucfirst( $ENV{PLACK_ENV} // NUL );
-   my $appclass = $self->config->appclass; ensure_class_loaded $appclass;
-   my $port     = $appclass->env_var( 'PORT' );
-   my $info     = 'v'.$appclass->VERSION; $port and $info .= " on port ${port}";
+   my $self   = shift;
+   my $port   = $self->env_var( 'PORT' );
+   my $server = ucfirst( $ENV{PLACK_ENV} // NUL );
+   my $info   = 'v'.$VERSION; $port and $info .= " on port ${port}";
 
    $self->log->info( "${server} Server started ${info}" );
 
@@ -63,7 +62,7 @@ sub BUILD {
 }
 
 sub env_var {
-   my ($class, $var, $v) = @_; my $k = (env_prefix $class)."_${var}";
+   my ($self, $var, $v) = @_; my $k = (env_prefix __PACKAGE__)."_${var}";
 
    return defined $v ? $ENV{ $k } = $v : $ENV{ $k };
 }

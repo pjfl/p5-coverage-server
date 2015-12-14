@@ -2,15 +2,17 @@ package Coverage::Server::Config;
 
 use namespace::autoclean;
 
-use Class::Usul::Constants qw( NUL TRUE );
-use File::DataClass::Types qw( ArrayRef Bool CodeRef HashRef NonEmptySimpleStr
-                               NonZeroPositiveInt Object Path
-                               PositiveInt SimpleStr Str Undef );
-use Sys::Hostname          qw( hostname );
-use Type::Utils            qw( as coerce from subtype via );
+use Class::Usul::Constants   qw( NUL TRUE );
+use Class::Usul::Crypt::Util qw( decrypt_from_config encrypt_for_config );
+use Class::Usul::File;
+use Class::Usul::Functions   qw( create_token );
+use File::DataClass::Types   qw( ArrayRef Bool CodeRef HashRef NonEmptySimpleStr
+                                 NonZeroPositiveInt Object Path
+                                 PositiveInt SimpleStr Str Undef );
+use Type::Utils              qw( as coerce from subtype via );
 use Moo;
 
-extends 'Class::Usul::Config::Programs';
+extends q(Class::Usul::Config::Programs);
 
 # Private functions
 my $_to_array_of_hash = sub {
@@ -18,6 +20,22 @@ my $_to_array_of_hash = sub {
 
    return [ map { my $v = $href->{ $_ }; +{ $key_key => $_, $val_key => $v } }
             sort keys %{ $href } ],
+};
+
+my $_read_encrypted_attr = sub {
+   my ($self, $file, $key) = @_; my $data = {}; my $token;
+
+   if ($file->exists) {
+      $data  = Class::Usul::File->data_load( paths => [ $file ] ) // {};
+      $token = decrypt_from_config $self, $data->{ $key };
+   }
+
+   unless ($token) {
+      $data->{ $key } = encrypt_for_config $self, $token = create_token;
+      Class::Usul::File->data_dump( { path => $file->assert, data => $data } );
+   }
+
+   return $token;
 };
 
 # Attribute constructors
@@ -28,8 +46,16 @@ my $_build_cdnjs = sub {
    return \%cdnjs;
 };
 
+my $_build_coverage_token = sub {
+   return $_[ 0 ]->$_read_encrypted_attr( $_[ 0 ]->ctlfile, 'token' );
+};
+
 my $_build_links = sub {
    return $_to_array_of_hash->( $_[ 0 ]->_links, 'name', 'url' );
+};
+
+my $_build_secret = sub {
+   return $_[ 0 ]->$_read_encrypted_attr( $_[ 0 ]->ctlfile, 'secret' );
 };
 
 my $_build_user_home = sub {
@@ -55,10 +81,8 @@ has 'components'      => is => 'ro',   isa => HashRef, builder => sub { {} };
 
 has 'compress_css'    => is => 'ro',   isa => Bool, default => TRUE;
 
-has 'coverage_token'  => is => 'lazy', isa => Object, builder => sub {
-   Coverage::Server::_Secret->new
-      ( config => $_[ 0 ], value => $_[ 0 ]->_coverage_token, ) },
-   init_arg           => undef;
+has 'coverage_token'  => is => 'lazy', isa => NonEmptySimpleStr,
+   builder            => $_build_coverage_token;
 
 has 'css'             => is => 'ro',   isa => NonEmptySimpleStr,
    default            => 'css/';
@@ -135,10 +159,8 @@ has 'request_roles'   => is => 'ro',   isa => ArrayRef[NonEmptySimpleStr],
 has 'scrubber'        => is => 'ro',   isa => Str,
    default            => '[^ +\-\./0-9@A-Z\\_a-z~]';
 
-has 'secret'          => is => 'lazy', isa => Object, builder => sub {
-   Coverage::Server::_Secret->new
-      ( config => $_[ 0 ], value => $_[ 0 ]->_secret, ) },
-   init_arg           => undef;
+has 'secret'          => is => 'lazy', isa => NonEmptySimpleStr,
+   builder            => $_build_secret;
 
 has 'serve_as_static' => is => 'ro',   isa => NonEmptySimpleStr,
    default            => 'css | favicon.ico | img | js | less';
@@ -178,49 +200,8 @@ has 'user_home'       => is => 'lazy', isa => Path, coerce => TRUE,
    builder            => $_build_user_home;
 
 # Private attributes
-has '_coverage_token' => is => 'ro',   isa => CodeRef|NonEmptySimpleStr,
-   builder            => sub { sub { hostname } }, init_arg => 'coverage_token';
-
 has '_links'          => is => 'ro',   isa => HashRef,
    builder            => sub { {} }, init_arg => 'links';
-
-has '_secret'         => is => 'ro',   isa => CodeRef|NonEmptySimpleStr,
-   builder            => sub { sub { hostname } }, init_arg => 'secret';
-
-package # Hide from indexer
-   Coverage::Server::_Secret;
-
-use Class::Usul::Constants   qw( EXCEPTION_CLASS TRUE );
-use Class::Usul::Crypt::Util qw( decrypt_from_config is_encrypted );
-use Class::Usul::Functions   qw( is_coderef );
-use Class::Usul::Types       qw( CodeRef HashRef NonEmptySimpleStr Object );
-use File::DataClass::IO      qw( io );
-use Unexpected::Functions    qw( throw );
-use Moo;
-
-use namespace::clean -except => [ 'meta' ];
-use overload '""' => sub { $_[ 0 ]->evaluate }, fallback => TRUE;
-
-has 'config' => is => 'ro', isa => HashRef|Object, required => TRUE,
-   weak_ref  => TRUE;
-
-has 'value'  => is => 'ro', isa => CodeRef|NonEmptySimpleStr, required => TRUE;
-
-sub evaluate {
-   my $self = shift; my $conf = $self->config; my $v = $self->value;
-
-   is_coderef $v and ($v = $v->() or throw 'Secret coderef is not true');
-
-   my $file = io $v;
-   my $raw  = (exists $ENV{ $v } and defined $ENV{ $v }  ) ? $ENV{ $v }
-            : ($file->exists     and $file->is_executable) ? qx( $v )
-            : $file->exists                                ? $file->all
-                                                           : $v;
-
-   (defined $raw and length $raw) or throw 'Secret not defined or no length';
-
-   return (is_encrypted $raw) ? decrypt_from_config( $conf, $raw ) : $raw;
-}
 
 1;
 
@@ -317,8 +298,8 @@ Boolean default to true. Should the C<make_css> method compress it's output
 
 =item C<coverage_token>
 
-A C<Coverage::Server::_Secret> object reference. Stringifies to the token used
-to authenticate new report posts
+A non empty simple string. The token used to authenticate new report posts
+This is read from F<var/etc/coverage-server.json> and decrypted before use
 
 =item C<css>
 
@@ -456,8 +437,8 @@ pathnames or query terms. Defaults to C<[;\$\`&\r\n]>
 
 =item C<secret>
 
-A C<Coverage::Server::_Secret> object reference. Stringifies to the key used to
-encrypt the session cookie
+A non empty simple string. The key used to encrypt the session cookie. Read
+from F<var/etc/coverage-server.json> on first use
 
 =item C<serve_as_static>
 

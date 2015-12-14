@@ -5,7 +5,7 @@ use strictures;
 use parent 'Exporter::Tiny';
 
 use Class::Usul::Constants qw( NUL );
-use Class::Usul::Functions qw( app_prefix env_prefix find_apphome first_char
+use Class::Usul::Functions qw( class2appdir env_prefix find_apphome first_char
                                get_cfgfiles is_arrayref is_hashref is_member );
 use Class::Usul::Time      qw( str2time time2str );
 use Scalar::Util           qw( weaken );
@@ -119,7 +119,7 @@ sub enhance ($) {
 
    $conf->{appclass    } //= 'Coverage::Server';
    $attr->{config_class} //= $conf->{appclass}.'::Config';
-   $conf->{name        } //= app_prefix   $conf->{appclass};
+   $conf->{name        } //= class2appdir $conf->{appclass};
    $conf->{home        } //= find_apphome $conf->{appclass}, $conf->{home};
    $conf->{cfgfiles    } //= get_cfgfiles $conf->{appclass}, $conf->{home};
 
