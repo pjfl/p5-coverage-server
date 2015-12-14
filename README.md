@@ -93,6 +93,10 @@ The configuration file defaults to `lib/Coverage/Server/coverage-server.json`
 
 Log some diagnostic information when the application starts
 
+## `env_var`
+
+Accessor / mutator for this applications environment variables
+
 ## `to_psgi_app`
 
 Load the ["Plack"](#plack) stack with middleware

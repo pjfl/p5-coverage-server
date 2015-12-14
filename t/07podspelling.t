@@ -43,6 +43,7 @@ flanigan
 attr
 cli
 Coverage::Server
+decrypted
 localenv
 merchantability
 plackup

@@ -2,7 +2,7 @@ package Coverage::Server;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.5.%d', q$Rev: 5 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.5.%d', q$Rev: 6 $ =~ /\d+/gmx );
 
 use Class::Usul;
 use Class::Usul::Constants  qw( NUL TRUE );
