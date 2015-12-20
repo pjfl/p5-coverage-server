@@ -18,6 +18,7 @@ my $prereqs  = {
   },
   'requires' => {
     'Class::Usul' => 'v0.65.0',
+    'Daemon::Control' => '0.001006',
     'Exporter::Tiny' => '0.042',
     'File::DataClass' => 'v0.66.0',
     'HTML::FormWidgets' => 'v0.23.0',

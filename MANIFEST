@@ -2,12 +2,14 @@ Build.PL
 Changes
 MANIFEST
 bin/coverage-cli
+bin/coverage-daemon
 bin/coverage-localenv
 bin/coverage-server
 lib/Coverage/Server.pm
 lib/Coverage/Server/CLI.pm
 lib/Coverage/Server/Config.pm
 lib/Coverage/Server/Controller/Root.pm
+lib/Coverage/Server/Daemon.pm
 lib/Coverage/Server/Model.pm
 lib/Coverage/Server/Model/Report.pm
 lib/Coverage/Server/Role/PageConfiguration.pm

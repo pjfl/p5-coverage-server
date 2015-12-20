@@ -2,8 +2,6 @@ package Coverage::Server::Daemon;
 
 use namespace::autoclean;
 
-use Coverage::Server; our $VERSION = $Coverage::Server::VERSION;
-
 use Class::Usul::Constants qw( EXCEPTION_CLASS NUL OK TRUE );
 use Class::Usul::Functions qw( class2appdir get_user throw );
 use Class::Usul::Types     qw( NonEmptySimpleStr NonZeroPositiveInt Object );

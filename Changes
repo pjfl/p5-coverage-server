@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+0.6.1     2015-12-20 20:52:43
           - Added a Daemon
           - Added Config default_route
           - Refactored Config secret and coverage_token

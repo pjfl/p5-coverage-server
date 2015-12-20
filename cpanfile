@@ -1,4 +1,5 @@
 requires "Class::Usul" => "v0.65.0";
+requires "Daemon::Control" => "0.001006";
 requires "Exporter::Tiny" => "0.042";
 requires "File::DataClass" => "v0.66.0";
 requires "HTML::FormWidgets" => "v0.23.0";
