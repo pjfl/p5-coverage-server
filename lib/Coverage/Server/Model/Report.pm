@@ -105,13 +105,13 @@ my $_get_coverage_data = sub { # TODO: This method needs caching
 };
 
 my $_invalidate_caches = sub {
-   my $self  = shift;
+   my $self  = shift; my $filesys = $self->config->data_mtime;
 
-   my $file  = $self->config->data_mtime; my $data_mtime = $file->stat->{mtime};
+   my $data_mtime = $filesys->exists ? $filesys->stat->{mtime} // 0 : 0;
 
    my $mtime = time; until ($mtime > $data_mtime) { sleep 1; $mtime = time }
 
-   $file->touch( $mtime ); $self->log->debug( 'Caches invalidated' );
+   $filesys->touch( $mtime ); $self->log->debug( 'Caches invalidated' );
 
    return;
 };
@@ -121,12 +121,11 @@ my $_json_header = sub {
 };
 
 my $_report_tree = sub {
-   my $self = shift; my $conf = $self->config;
+   my $self = shift; my $conf = $self->config; my $filesys = $conf->data_mtime;
 
-   my $data_mtime = $conf->data_mtime->stat->{mtime};
+   my $data_mtime = $filesys->exists ? $filesys->stat->{mtime} // 0 : 0;
 
-   if (not defined $_report_cache->{mtime}
-        or $data_mtime > $_report_cache->{mtime}) {
+   if ($data_mtime == 0 or $data_mtime > $_report_cache->{mtime}) {
       my $no_index = join '|', @{ $conf->no_index };
       my $filter   = sub { not m{ (?: $no_index ) }mx };
       my $root     = $conf->datadir->clone->filter( $filter );
