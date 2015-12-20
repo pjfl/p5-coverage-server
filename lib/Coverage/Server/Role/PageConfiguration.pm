@@ -24,15 +24,17 @@ around 'initialise_stash' => sub {
       catch { $self->log->warn( $_ ) };
    }
 
-   $stash->{skin } = delete $stash->{prefs}->{skin};
+   $stash->{skin} = delete $stash->{prefs}->{skin};
+
+   my $links = $stash->{links} //= {};
 
    for my $k (@{ $conf->stash_attr->{links} }) {
-      $stash->{links}->{ $k } = $req->uri_for( $conf->$k() );
+      $links->{ $k } = $req->uri_for( $conf->$k() );
    }
 
-   $stash->{links}->{cdnjs   } = $conf->cdnjs;
-   $stash->{links}->{base_uri} = $req->base;
-   $stash->{links}->{req_uri } = $req->uri;
+   $links->{cdnjs   } = $conf->cdnjs;
+   $links->{base_uri} = $req->base;
+   $links->{req_uri } = $req->uri;
    return $stash;
 };
 

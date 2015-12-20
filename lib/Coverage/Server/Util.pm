@@ -122,8 +122,7 @@ sub enhance ($) {
    $conf->{name        } //= class2appdir $conf->{appclass};
    $conf->{home        } //= find_apphome $conf->{appclass}, $conf->{home};
    $conf->{cfgfiles    } //= get_cfgfiles $conf->{appclass}, $conf->{home};
-
-   $conf->{l10n_attributes}->{domains} = [ $conf->{name} ];
+   $conf->{l10n_domains} //= [ $conf->{name} ];
 
    return $attr;
 }

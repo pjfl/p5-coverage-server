@@ -203,6 +203,8 @@ has 'user_attributes' => is => 'ro',   isa => HashRef, builder => sub { {
 has 'user_home'       => is => 'lazy', isa => Path, coerce => TRUE,
    builder            => $_build_user_home;
 
+has 'workers'         => is => 'ro',   isa => NonZeroPositiveInt, default => 5;
+
 # Private attributes
 has '_links'          => is => 'ro',   isa => HashRef,
    builder            => sub { {} }, init_arg => 'links';
@@ -564,6 +566,11 @@ users and their profile used by the application
 
 The home directory of the user who owns the files and directories in the
 the application
+
+=item C<workers>
+
+A non zero positive integer. The number of processes to start when running
+under a pre-forking server. Defaults to 5
 
 =back
 

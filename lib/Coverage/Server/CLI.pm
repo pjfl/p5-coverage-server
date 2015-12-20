@@ -17,6 +17,7 @@ around 'BUILDARGS' => sub {
 
    $args->{config_class} //= $conf->{appclass}.'::Config';
    $conf->{name        } //= class2appdir $conf->{appclass};
+   $conf->{l10n_domains} //= [ $conf->{name} ];
 
    return $orig->( $self, $args );
 };
