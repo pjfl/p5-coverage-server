@@ -179,8 +179,8 @@ my $_create_coverage_badge = sub {
    $svg->path( 'd' => 'M60 0h4v20h-4z', 'fill' => $fill );
    $svg->rect( 'fill' => 'url(#a)', 'height' => 20, 'rx' => 3, 'width' => 100 );
 
-   $_svg_text->( $_svg_group->( $svg, '#fff'  ), 27.5, 15, 'coverage' );
-   $_svg_text->( $_svg_group->( $svg, $colour ), 80,   15, $coverage  );
+   $_svg_text->( $_svg_group->( $svg, '#fff'  ), 30, 15, 'coverage' );
+   $_svg_text->( $_svg_group->( $svg, $colour ), 80, 15, $coverage  );
 
    return $_badge_cache->{ $coverage } = $svg->xmlify( '-namespace' => 'svg' );
 };

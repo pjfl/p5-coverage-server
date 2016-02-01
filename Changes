@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+          - Adjusted horizontal position of text in badge
           - Fixed cache error when mtime file missing
 
 0.6.1     2015-12-20 20:52:43
