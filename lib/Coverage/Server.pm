@@ -2,11 +2,11 @@ package Coverage::Server;
 
 use 5.010001;
 use namespace::autoclean;
-use version; our $VERSION = qv( sprintf '0.6.%d', q$Rev: 3 $ =~ /\d+/gmx );
+use version; our $VERSION = qv( sprintf '0.6.%d', q$Rev: 4 $ =~ /\d+/gmx );
 
 use Class::Usul;
 use Class::Usul::Constants  qw( NUL TRUE );
-use Class::Usul::Functions  qw( env_prefix );
+use Class::Usul::Functions  qw( ns_environment );
 use Class::Usul::Types      qw( HashRef Plinth );
 use Coverage::Server::Util  qw( enhance );
 use HTTP::Status            qw( HTTP_FOUND );
@@ -56,7 +56,7 @@ around 'to_psgi_app' => sub {
 
 sub BUILD {
    my $self   = shift;
-   my $port   = $self->env_var( 'PORT' );
+   my $port   = $self->env_var( 'port' );
    my $server = ucfirst( $ENV{PLACK_ENV} // NUL );
    my $info   = 'v'.$VERSION; $port and $info .= " on port ${port}";
 
@@ -66,9 +66,7 @@ sub BUILD {
 }
 
 sub env_var {
-   my ($self, $var, $v) = @_; my $k = (env_prefix __PACKAGE__)."_${var}";
-
-   return defined $v ? $ENV{ $k } = $v : $ENV{ $k };
+   return ns_environment __PACKAGE__, $_[ 1 ], $_[ 2 ];
 }
 
 1;

@@ -12,8 +12,8 @@ use JSON::MaybeXS          qw( decode_json encode_json );
 use SVG;
 use Moo;
 
-extends 'Coverage::Server::Model';
-with    'Coverage::Server::Role::PageConfiguration';
+extends q(Coverage::Server::Model);
+with    q(Coverage::Server::Role::PageConfiguration);
 
 # Public attributes
 has '+moniker' => default => 'report';
@@ -24,7 +24,7 @@ my $_coverage_cache     = {};
 my $_distribution_cache = {};
 my $_navigation_cache   = {};
 my $_page_cache         = {};
-my $_report_cache       = {};
+my $_report_cache       = { mtime => 0 };
 
 # Private subroutines
 my $_colour_band = sub {

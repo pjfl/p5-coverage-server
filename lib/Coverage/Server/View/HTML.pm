@@ -10,8 +10,8 @@ use Encode                 qw( encode );
 use HTML::FormWidgets;
 use Moo;
 
-with 'Web::Components::Role';
-with 'Web::Components::Role::TT';
+with q(Web::Components::Role);
+with q(Web::Components::Role::TT);
 
 # Public attributes
 has 'application' => is => 'ro', isa => Plinth,

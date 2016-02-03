@@ -8,6 +8,7 @@ use Class::Usul::Constants qw( NUL );
 use Class::Usul::Functions qw( class2appdir env_prefix find_apphome first_char
                                get_cfgfiles is_arrayref is_hashref is_member );
 use Class::Usul::Time      qw( str2time time2str );
+use JSON::MaybeXS          qw( decode_json );
 use Scalar::Util           qw( weaken );
 
 our @EXPORT_OK = qw( build_navigation_list build_tree clone enhance
@@ -42,21 +43,30 @@ my $_make_tuple = sub {
 sub build_navigation_list ($$$$) {
    my ($root, $tree, $prefix, $ids) = @_; my $iter = iterator( $tree );
 
-   my $wanted = join '/', $prefix, grep { defined } @{ $ids }; my @nav = ();
+   my $wanted = join '/', $prefix, grep { defined } @{ $ids };
+
+   my $links  = {}; my @nav = ();
 
    while (defined (my $node = $iter->())) {
       $node->{id} eq 'latest' and next;
 
-      my $link = clone( $node ); delete $link->{tree};
+      my $link = clone( $node ); delete $link->{tree}; $link->{depth}--;
 
-      $link->{class}  = $node->{type} eq 'folder' ? 'folder-link' : 'file-link';
-      $link->{tip  }  = $_get_tip_text->( $root, $node );
-      $link->{depth} -= 1;
+      $link->{class } = $link->{type} eq 'folder' ? 'folder-link' : 'file-link';
+      $link->{tip   } = $_get_tip_text->( $root, $node );
 
       if (defined $ids->[ 0 ] and $ids->[ 0 ] eq $node->{id}) {
          $link->{class} .= $node->{url} eq $wanted ? ' active' : ' open';
          shift @{ $ids };
       }
+
+      $links->{ $link->{id} } = $link; my $dist_name;
+
+      my $report = $link->{type} eq 'file'
+                 ? decode_json $link->{path}->all : undef;
+
+      $report and $dist_name = $report->{info}->{dist_name}
+              and $links->{ lc $dist_name }->{title} = $dist_name;
 
       push @nav, $link;
    }

@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+          - Fixed casing of dist_name in navigation panel
           - Adjusted horizontal position of text in badge
           - Fixed cache error when mtime file missing
 

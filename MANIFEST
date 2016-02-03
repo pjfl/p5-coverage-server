@@ -26,6 +26,7 @@ t/10test_script.t
 t/boilerplate.pm
 var/root/css/default-green.css
 var/root/img/favicon.png
+var/root/img/fork-me.png
 var/root/js/default.js
 var/root/js/mooclasses.js
 var/root/templates/default/exception-right-column.tt

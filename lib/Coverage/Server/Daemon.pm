@@ -50,7 +50,7 @@ my $_get_listener_args = sub {
       $args->{ '--nprocs'     } = $self->workers;
    }
    else {
-      $conf->appclass->env_var( 'PORT', my $port = $self->port );
+      $conf->appclass->env_var( 'port', my $port = $self->port );
       $args->{ '--access-log' } = $logs->catfile( "access-${port}.log" );
       $args->{ '--port'       } = $port;
 
@@ -73,7 +73,7 @@ my $_stdio_file = sub {
 my $_daemon = sub {
    my $self = shift; $PROGRAM_NAME = $self->app;
 
-   $self->config->appclass->env_var( 'DEBUG', $self->debug );
+   $self->config->appclass->env_var( 'debug', $self->debug );
    $self->server ne 'HTTP::Server::PSGI' and $ENV{PLACK_ENV} = 'production';
    Plack::Runner->run( $self->$_get_listener_args );
    exit OK;
@@ -108,7 +108,7 @@ my $_build_daemon_control = sub {
 
    $conf->user and $args->{user} = $args->{group} = $conf->user;
 
-   return Daemon::Control->new( $args );
+   return Coverage::Server::Daemon::Control->new( $args );
 };
 
 # Private attributes
@@ -172,6 +172,20 @@ sub stop : method {
    my $self = shift; $self->params->{stop} = [ { expected_rv => 1 } ];
 
    return $self->_daemon_control->do_stop;
+}
+
+package # Hide from indexer
+   Coverage::Server::Daemon::Control;
+
+use parent 'Daemon::Control';
+
+sub run_template {
+   my ($self, $content, $conf) = @_;
+
+   $content =~ s{\[% (.*?) %\]}{$conf->{$1}}g;
+   $content =~ s{ [ ] \$1 $ }{ \$\*}mx;
+
+   return $content;
 }
 
 1;
