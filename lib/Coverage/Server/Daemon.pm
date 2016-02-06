@@ -64,6 +64,16 @@ my $_get_listener_args = sub {
    return %{ $args };
 };
 
+my $_load_template = sub {
+   my $data;
+
+   while (my $line = <DATA>) {
+      $line =~ m{ ^ __END__ $ }mx and last; $data .= $line;
+   }
+
+   return $data;
+};
+
 my $_stdio_file = sub {
    my ($self, $extn, $name) = @_; $name ||= $self->config->name;
 
@@ -93,7 +103,7 @@ my $_build_daemon_control = sub {
       path         => $conf->pathname,
 
       init_config  => catfile( NUL, 'etc', 'default', $appdir ),
-      init_code    => '# Init code',
+      init_code    => "# Init code\nDAEMON_ARGS=",
 
       directory    => $conf->appldir,
       program      => sub { shift; $self->$_daemon( @_ ) },
@@ -103,12 +113,13 @@ my $_build_daemon_control = sub {
       stderr_file  => $self->$_stdio_file( 'err' ),
       stdout_file  => $self->$_stdio_file( 'out' ),
 
+      data         => $_load_template->(),
       fork         => 2,
    };
 
    $conf->user and $args->{user} = $args->{group} = $conf->user;
 
-   return Coverage::Server::Daemon::Control->new( $args );
+   return Daemon::Control->new( $args );
 };
 
 # Private attributes
@@ -174,22 +185,35 @@ sub stop : method {
    return $self->_daemon_control->do_stop;
 }
 
-package # Hide from indexer
-   Coverage::Server::Daemon::Control;
-
-use parent 'Daemon::Control';
-
-sub run_template {
-   my ($self, $content, $conf) = @_;
-
-   $content =~ s{\[% (.*?) %\]}{$conf->{$1}}g;
-   $content =~ s{ [ ] \$1 $ }{ \$\*}mx;
-
-   return $content;
-}
-
 1;
 
+__DATA__
+#!/bin/sh
+
+# [% HEADER %]
+
+### BEGIN INIT INFO
+# Provides:          [% NAME %]
+# Required-Start:    [% REQUIRED_START %]
+# Required-Stop:     [% REQUIRED_STOP %]
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: [% SHORT_DESCRIPTION %]
+# Description:       [% DESCRIPTION %]
+### END INIT INFO
+
+[% INIT_CODE_BLOCK %]
+
+[% INIT_SOURCE_FILE %]
+
+if [ ! -x [% SCRIPT %] ]; then
+   echo "Required program [% SCRIPT %] not found!"
+   exit 1
+fi
+
+[% SCRIPT %] ${DAEMON_ARGS} ${*}
+
+exit ${?}
 __END__
 
 =pod
