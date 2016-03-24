@@ -6,9 +6,29 @@ use Class::Usul::Constants   qw( CONFIG_EXTN FALSE NUL OK TRUE );
 use Class::Usul::Crypt::Util qw( encrypt_for_config );
 use Class::Usul::Functions   qw( arg_list class2appdir ensure_class_loaded
                                  throw );
+use Class::Usul::Types       qw( LoadableClass NonEmptySimpleStr Object );
 use Moo;
+use Class::Usul::Options;
 
 extends q(Class::Usul::Programs);
+
+my $_build_less = sub {
+   my $self = shift; my $conf = $self->config;
+
+   return $self->less_class->new
+      ( compress      =>   $conf->compress_css,
+        include_paths => [ $conf->root->catdir( 'less' )->pathname ],
+        tmp_path      =>   $conf->tempdir, );
+};
+
+option 'skin'         => is => 'lazy', isa => NonEmptySimpleStr, format => 's',
+   documentation      => 'Name of the skin to operate on',
+   builder            => sub { $_[ 0 ]->config->skin }, short => 's';
+
+has 'less'            => is => 'lazy', isa => Object, builder => $_build_less;
+
+has 'less_class'      => is => 'lazy', isa => LoadableClass,
+   default            => 'CSS::LESS';
 
 around 'BUILDARGS' => sub {
    my ($orig, $self, @args) = @_; my $args = arg_list @args;
@@ -20,6 +40,22 @@ around 'BUILDARGS' => sub {
    $conf->{l10n_domains} //= [ $conf->{name} ];
 
    return $orig->( $self, $args );
+};
+
+my $_write_theme = sub {
+   my ($self, $cssd, $file) = @_;
+
+   my $skin = $self->skin;
+   my $conf = $self->config;
+   my $path = $conf->root->catfile( $conf->less, $skin, "${file}.less" );
+
+   $path->exists or return;
+
+   my $css  = $self->less->compile( $path->all );
+
+   $self->info( 'Writing theme file [_1]', { args => [ "${skin}-${file}" ] } );
+   $cssd->catfile( "${skin}-${file}.css" )->println( $css );
+   return;
 };
 
 sub encrypt : method {
@@ -34,6 +70,17 @@ sub encrypt : method {
    $value ne $again and throw 'Tokens do not match';
    $data->{token} = encrypt_for_config $conf, $value;
    $file->data_dump( path => $path, data => $data );
+   return OK;
+}
+
+sub make_css : method {
+   my $self = shift;
+   my $conf = $self->config;
+   my $cssd = $conf->root->catdir( $conf->css );
+
+   if (my $file = $self->next_argv) { $self->$_write_theme( $cssd, $file ) }
+   else { $self->$_write_theme( $cssd, $_ ) for (@{ $conf->less_files }) }
+
    return OK;
 }
 

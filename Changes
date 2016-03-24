@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+          - Turned on float view by default
           - Dropped dependency on HTML::FormWidgets
           - Daemon now has it's own init file template
 
