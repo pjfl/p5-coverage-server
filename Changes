@@ -1,5 +1,6 @@
 Revision history for Coverage::Server
 
+          - Dropped dependency on HTML::FormWidgets
           - Daemon now has it's own init file template
 
 0.7.1     2016-02-05 14:52:05

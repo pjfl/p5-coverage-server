@@ -5,7 +5,7 @@
             <article>
 [%    INCLUDE 'default/header.tt' -%]
                <!-- Content -->
-            [% page.content | eval %]
+[%    Dispatch( page.content ) %]
             </article>
          </div>
       </div>

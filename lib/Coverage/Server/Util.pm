@@ -189,6 +189,7 @@ sub stash_functions ($$$) {
 
    $dest->{is_member} = \&is_member;
    $dest->{loc      } = sub { $src->loc( @_ ) };
+   $dest->{reference} = sub { ref $_[ 0 ] };
    $dest->{str2time } = \&str2time;
    $dest->{time2str } = \&time2str;
    $dest->{ucfirst  } = sub { ucfirst $_[ 0 ] };

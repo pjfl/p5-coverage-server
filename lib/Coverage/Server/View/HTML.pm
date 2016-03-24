@@ -7,7 +7,6 @@ use Class::Usul::Functions qw( is_hashref );
 use Class::Usul::Types     qw( Plinth );
 use Coverage::Server::Util qw( stash_functions );
 use Encode                 qw( encode );
-use HTML::FormWidgets;
 use Moo;
 
 with q(Web::Components::Role);
@@ -32,16 +31,6 @@ sub serialize {
 
    return [ $stash->{code}, $_header->( $stash->{http_headers} ), [ $html ] ];
 }
-
-around 'serialize' => sub {
-   my ($orig, $self, $req, $stash) = @_; my $page = $stash->{page} //= {};
-
-   exists $page->{content} and is_hashref $page->{content}
-      and $page->{content}->{widget}
-      and $page->{content} = HTML::FormWidgets->new( $page->{content} )->render;
-
-   return $orig->( $self, $req, $stash );
-};
 
 1;
 

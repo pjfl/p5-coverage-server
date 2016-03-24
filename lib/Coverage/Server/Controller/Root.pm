@@ -7,14 +7,14 @@ with 'Web::Components::Role';
 has '+moniker' => default => 'root';
 
 sub dispatch_request {
-   sub (GET  + /badge/* | /badge/**.* + ?*) { [ 'report', 'get_badge',   @_ ] },
-   sub (GET  + /help    | /help/*     + ?*) { [ 'report', 'get_help',    @_ ] },
-   sub (POST + /report/*              + ?*) { [ 'report', 'add_report',  @_ ] },
-   sub (GET  + /report/*              + ?*) { [ 'report', 'get_latest',  @_ ] },
-   sub (GET  + /report/**.*           + ?*) { [ 'report', 'get_content', @_ ] },
-   sub (GET  + /report  | /report/    + ?*) { [ 'report', 'get_reports', @_ ] },
-   sub (GET  + /index   | /           + ?*) { [ 'report', 'get_reports', @_ ] },
-   sub (GET  + /**                    + ?*) { [ 'report', 'not_found',   @_ ] };
+   sub (GET  + /badge/* | /badge/**.* + ?*) { [ 'report/get_badge',   @_ ] },
+   sub (GET  + /help    | /help/*     + ?*) { [ 'report/get_help',    @_ ] },
+   sub (POST + /report/*              + ?*) { [ 'report/add_report',  @_ ] },
+   sub (GET  + /report/*              + ?*) { [ 'report/get_latest',  @_ ] },
+   sub (GET  + /report/**.*           + ?*) { [ 'report/get_stash',   @_ ] },
+   sub (GET  + /report  | /report/    + ?*) { [ 'report/get_reports', @_ ] },
+   sub (GET  + /index   | /           + ?*) { [ 'report/get_reports', @_ ] },
+   sub (GET  + /**                    + ?*) { [ 'report/not_found',   @_ ] };
 }
 
 1;

@@ -4,7 +4,6 @@ use namespace::autoclean;
 
 use Class::Usul::Constants qw( FALSE NUL TRUE );
 use Class::Usul::Functions qw( symlink throw );
-use Class::Usul::Response::Table;
 use Coverage::Server::Util qw( build_navigation_list
                                build_tree clone iterator );
 use HTTP::Status           qw( HTTP_OK HTTP_UNAUTHORIZED );
@@ -17,6 +16,17 @@ with    q(Coverage::Server::Role::PageConfiguration);
 
 # Public attributes
 has '+moniker' => default => 'report';
+
+# Constrution
+around 'get_stash' => sub {
+   my ($orig, $self, $req, @args) = @_;
+
+   my $stash = $orig->( $self, $req, @args );
+
+   $stash->{nav} = $self->navigation( $req, $stash );
+
+   return $stash;
+};
 
 # Private package caches
 my $_badge_cache        = {};
@@ -41,49 +51,50 @@ my $_create_distribution_table = sub {
    my ($self, $req) = @_; my $rows = [];
 
    for my $dist (map { $_->basename } $self->config->datadir->all_dirs) {
-      push @{ $rows }, {
-         id          => $dist,
-         coverage    => {
-            fhelp    => 'Coverage Badge',
+      my $tip = $req->loc( 'Coverage badge for [_1]', [ $dist ] );
+
+      push @{ $rows }, [
+         { value     => $dist },
+         { value     => {
+            hint     => $req->loc( 'Information' ),
             href     => $req->uri_for( "report/${dist}/latest" ),
-            imgclass => 'badge',
-            text     => $req->uri_for( "badge/${dist}/latest" ),
-            type     => 'anchor',
-            widget   => TRUE, } };
+            tip      => $tip,
+            type     => 'link',
+            value    => {
+               class => 'badge',
+               tip   => $tip,
+               type  => 'image',
+               value => $req->uri_for( "badge/${dist}/latest" ), } } } ];
    }
 
-   return Class::Usul::Response::Table->new( {
-      count  => scalar @{ $rows },
-      fields => [ 'id', 'coverage' ],
-      labels => { 'id' => 'Distribution', },
-      values => $rows,
-   } );
+   return { headers => [ { value => $req->loc( 'Distribution' ) },
+                         { value => $req->loc( 'Coverage'     ) } ],
+            rows    => $rows,
+            type    => 'table', };
 };
 
 my $_create_summary_table = sub {
    my $summary = shift;
    my $fields  = [ qw( id statement branch condition subroutine pod total ) ];
+   my $headers = [ map { { value => ucfirst $_ } } @{ $fields } ];
    my $rows    = [];
 
    for my $k ((sort grep { not m{ Total }mx } keys %{ $summary }), 'Total') {
-      my $row = { id => $k };
+      my $row = [ { value => $k } ];
 
       for my $field (grep { $_ ne 'id' } @{ $fields } ) {
          my $v = $summary->{ $k }->{ $field }->{percentage};
 
          defined $v and $v = int (0.5 + 10 * $v) / 10;
-         $row->{ $field } = $v // 'n/a';
+         push @{ $row }, { value => $v // 'n/a' };
       }
 
       push @{ $rows }, $row;
    }
 
-   return Class::Usul::Response::Table->new( {
-      count  => scalar @{ $rows },
-      fields => $fields,
-      labels => { 'id' => 'Distribution', },
-      values => $rows,
-   } );
+   $headers->[ 0 ]->{value} = 'Distribution';
+
+   return { headers => $headers, rows => $rows, type => 'table' };
 };
 
 my $_get_coverage_data = sub { # TODO: This method needs caching
@@ -210,9 +221,8 @@ my $_initialise_page = sub {
    $cached and $cached->{mtime} >= $tree->{mtime} and return $cached;
 
    my $report = decode_json $path->all;
-   my $table  = $_create_summary_table->( $report->{summary} );
 
-   $page->{content} = { data => $table, type => 'table', widget => TRUE };
+   $page->{content} = $_create_summary_table->( $report->{summary} );
    $page->{parent } = $report->{info}->{dist_name};
    $page->{mtime  } = $tree->{mtime};
 
@@ -282,11 +292,11 @@ sub get_badge {
 }
 
 sub get_help {
-   my ($self, $req) = @_; return $self->get_content( $req );
+   my ($self, $req) = @_; return $self->get_stash( $req );
 }
 
 sub get_latest {
-   my ($self, $req) = @_; return $self->get_content( $req );
+   my ($self, $req) = @_; return $self->get_stash( $req );
 }
 
 sub get_reports {
@@ -299,13 +309,11 @@ sub get_reports {
          = { table => $self->$_create_distribution_table( $req ),
              mtime => $tree->{mtime}, };
 
-   my $page = { content   => {
-                   data   => $cache->{table},
-                   type   => 'table',
-                   widget => TRUE, },
-                title     => $req->loc( 'Coverage by Distribution' ), };
+   my $page   =  {
+      content => $cache->{table},
+      title   => $req->loc( 'Coverage by Distribution' ), };
 
-   return $self->get_content( $req, $page );
+   return $self->get_stash( $req, $page );
 }
 
 sub navigation {

@@ -31,7 +31,7 @@ sub exception_handler {
       template  => [ 'report', 'exception' ],
       title     => ucfirst $name,
       type      => 'generated' };
-   my $stash    =  $self->get_content( $req, $page );
+   my $stash    =  $self->get_stash( $req, $page );
 
    $stash->{code} = $e->rv >= HTTP_OK ? $e->rv : HTTP_BAD_REQUEST;
 
@@ -47,11 +47,10 @@ sub execute {
    return $self->$method( @args );
 }
 
-sub get_content {
+sub get_stash {
    my ($self, $req, $page) = @_; my $stash = $self->initialise_stash( $req );
 
-   $stash->{page} = $self->load_page ( $req, $page  );
-   $stash->{nav } = $self->navigation( $req, $stash );
+   $stash->{page} = $self->load_page( $req, $page );
 
    return $stash;
 }
@@ -62,13 +61,6 @@ sub initialise_stash {
 
 sub load_page {
    my ($self, $req, $page) = @_; $page //= {}; return $page;
-}
-
-sub navigation {
-   my ($self, $req, $stash) = @_;
-
-   return [ { depth => 0, tip => $req->loc( 'Index Page' ),
-              title => 'Home', type => 'file', url => NUL } ];
 }
 
 sub not_found {
@@ -84,7 +76,7 @@ sub not_found {
       template  => [ 'report', 'exception' ],
       title     => ucfirst $name,
       type      => 'generated' };
-   my $stash    =  $self->get_content( $req, $page );
+   my $stash    =  $self->get_stash( $req, $page );
 
    $stash->{code} = HTTP_NOT_FOUND;
 
