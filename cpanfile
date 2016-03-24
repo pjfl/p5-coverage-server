@@ -4,7 +4,6 @@ requires "Exporter::Tiny" => "0.042";
 requires "FCGI" => "0.77";
 requires "FCGI::ProcManager" => "0.25";
 requires "File::DataClass" => "v0.66.0";
-requires "HTML::FormWidgets" => "v0.23.0";
 requires "HTTP::Message" => "6.06";
 requires "JSON::MaybeXS" => "1.003005";
 requires "Moo" => "2.000001";

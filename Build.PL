@@ -23,7 +23,6 @@ my $prereqs  = {
     'FCGI' => '0.77',
     'FCGI::ProcManager' => '0.25',
     'File::DataClass' => 'v0.66.0',
-    'HTML::FormWidgets' => 'v0.23.0',
     'HTTP::Message' => '6.06',
     'JSON::MaybeXS' => '1.003005',
     'Moo' => '2.000001',

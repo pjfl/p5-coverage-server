@@ -29,6 +29,10 @@ var/root/img/favicon.png
 var/root/img/fork-me.png
 var/root/js/default.js
 var/root/js/mooclasses.js
+var/root/less/default/green.less
+var/root/less/default/mixins.less
+var/root/less/default/normalise.less
+var/root/less/default/theme-base.less
 var/root/templates/default/exception-right-column.tt
 var/root/templates/default/footer.tt
 var/root/templates/default/fork-me.tt
