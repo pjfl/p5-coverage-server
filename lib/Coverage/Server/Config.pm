@@ -170,7 +170,7 @@ has 'serve_as_static' => is => 'ro',   isa => NonEmptySimpleStr,
    default            => 'css | favicon.ico | img | js | less';
 
 has 'server'          => is => 'ro',   isa => NonEmptySimpleStr,
-   default            => 'Starman';
+   default            => 'FCGI';
 
 has 'session_attr'    => is => 'lazy', isa => HashRef[ArrayRef],
    builder            => sub { {
